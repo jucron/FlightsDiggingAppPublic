@@ -1,0 +1,6 @@
+@FlightsDiggingApp_HostAddress = http://localhost:5136
+
+GET {{FlightsDiggingApp_HostAddress}}/flightsdigger/
+Accept: application/json
+
+###
