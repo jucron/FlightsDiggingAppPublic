@@ -271,5 +271,10 @@ namespace FlightsDiggingApp.Services
                 return new GetAirportsResponse() { message = "error" };
             }
         }
+
+        internal GetRoundtripsResponse GetRoundtripAsync(GetRoundtripsRequest request)
+        {
+            return new GetRoundtripsResponse() { currency = "TEST" };
+        }
     }
 }

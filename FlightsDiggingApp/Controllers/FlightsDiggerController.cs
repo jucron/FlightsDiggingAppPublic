@@ -18,16 +18,18 @@ namespace FlightsDiggingApp.Controllers
     {
         private readonly ILogger<FlightsDiggerController> _logger;
         private readonly ApiService _apiService;
+        private readonly GetRoundTripsService _getRoundTripsService;
 
         public FlightsDiggerController(ILogger<FlightsDiggerController> logger)
         {
             _logger = logger;
             _apiService = new ApiService(logger);
+            _getRoundTripsService = new GetRoundTripsService(logger, _apiService);
         }
 
 
         [HttpGet("getstaticflights")]
-        public string GetFlights(CancellationToken cancellationToken)
+        public string GetFlightsStatic(CancellationToken cancellationToken)
         {
             StringBuilder resultToReturn = new StringBuilder();
 
@@ -87,7 +89,7 @@ namespace FlightsDiggingApp.Controllers
             if (HttpContext.WebSockets.IsWebSocketRequest)
             {
                 using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-                await StreamGetRoundTripsAsync(webSocket);
+                await _getRoundTripsService.HandleRoundTripsAsync(webSocket);
             }
             else
             {
