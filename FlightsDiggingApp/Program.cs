@@ -7,6 +7,24 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+         // Allow any origin (less secure, use only in development):
+         policy.AllowAnyOrigin()
+               .AllowAnyHeader()
+               .AllowAnyMethod();             
+    });
+    options.AddPolicy("AllowAngular", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200") // Replace with your Angular app URL
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -16,10 +34,17 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+app.UseRouting();              // Enable routing for controllers
 
-app.UseAuthorization();
+//app.UseCors("AllowAngular"); // Apply CORS policy
+app.UseCors("AllowAll");       // Apply CORS policy
 
-app.MapControllers();
+app.UseWebSockets();           // Enable WebSocket support before routing
+
+app.UseHttpsRedirection();     // Redirect HTTP to HTTPS (optional)
+
+app.UseAuthorization();        // Optional: Apply Authorization (if necessary)
+
+app.MapControllers();           // Map controllers
 
 app.Run();

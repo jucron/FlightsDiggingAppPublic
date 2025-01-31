@@ -1,6 +1,10 @@
 @FlightsDiggingApp_HostAddress = http://localhost:5136
 
-GET {{FlightsDiggingApp_HostAddress}}/flightsdigger/
+GET {{FlightsDiggingApp_HostAddress}}/getroundtrip/
 Accept: application/json
+
+GET {{FlightsDiggingApp_HostAddress}}/getairports/
+Accept: application/json
+
 
 ###

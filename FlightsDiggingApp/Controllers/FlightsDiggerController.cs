@@ -1,206 +1,121 @@
 using System.Linq;
+using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
+using FlightsDiggingApp.Mappers;
 using FlightsDiggingApp.Models;
+using FlightsDiggingApp.Services;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlightsDiggingApp.Controllers
 {
+    [EnableCors("AllowAll")]
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/flightsdigger")]
     public class FlightsDiggerController : ControllerBase
     {
         private readonly ILogger<FlightsDiggerController> _logger;
-        private readonly string _rapidapi_key = "441f8260camsh5ee529fad4a52c9p1cadf2jsnd01e83b82152";
+        private readonly ApiService _apiService;
 
         public FlightsDiggerController(ILogger<FlightsDiggerController> logger)
         {
             _logger = logger;
+            _apiService = new ApiService(logger);
         }
 
 
-        [HttpGet(Name = "FlightsDigger")]
-        public string GetFlights()
+        [HttpGet("getstaticflights")]
+        public string GetFlights(CancellationToken cancellationToken)
         {
-            string resultToReturn = "no processing";
+            StringBuilder resultToReturn = new StringBuilder();
 
-            var initDepartDate = "2025-06-01";
-            var endDepartDate = "2025-06-10";
-
-            var initReturnDate = "2025-06-15";
-            var endReturnDate = "2025-06-28";
-
+            
             var from = "GIG";
             var to = "OPO";
             var currency = "BRL";
-            var departDate = "2025-06-06";
-            var returnDate = "2025-06-25";
             var limitFlightHour = 16;
 
-            string sessionId;
+            var initDepartDateString = "2025-06-05";
+            var endDepartDateString = "2025-06-10";
 
-            resultToReturn = $"From {from} to {to}: Departure: {departDate} Return date: {returnDate}. Limit flight time: {limitFlightHour}\n" ;
-
-            var resultSearchRoundTrip = ExecuteSearchRoundTripAsync(from, to, currency, departDate, returnDate);
+            var initReturnDateString = "2025-06-25";
+            var endReturnDateString = "2025-06-28";
             
-            if (resultSearchRoundTrip.Result == null || resultSearchRoundTrip.Result.data == null)
-            {
-                _logger.LogInformation($"ExecuteSearchRoundTripAsync with null objects: {resultSearchRoundTrip.Result.ToString()}");
-                return resultToReturn;
-            }
-            var searchRoundTripData = resultSearchRoundTrip.Result.data;
-            _logger.LogInformation($"resultSearchRoundTrip Status: {searchRoundTripData.context.status}");
 
-            if (searchRoundTripData.context.status == "failure")
-            {
-                return resultToReturn;
-            } 
-            else if (searchRoundTripData.context.status == "incomplete")
-            {
-                sessionId = searchRoundTripData.context.sessionId.TrimEnd('=');
+            DateTime startDepartDate = DateTime.Parse(initDepartDateString);
+            DateTime endDepartDate = DateTime.Parse(endDepartDateString);
 
-                _logger.LogInformation($"sessionId: {sessionId}");
+            DateTime startReturnDate = DateTime.Parse(initReturnDateString);
+            DateTime endReturnDate = DateTime.Parse(endReturnDateString);
 
-                // tries 5 times
-                int maxTries = 5;
-                for (int i = 1; i <= maxTries; i++)
+            for (DateTime departDate = startDepartDate; departDate <= endDepartDate; departDate = departDate.AddDays(1))
+            {
+
+                for (DateTime returnDate = startReturnDate; returnDate <= endReturnDate; returnDate = returnDate.AddDays(1))
                 {
-                    var delayMilliseconds = 5000;
-                    _logger.LogInformation($"Trying ExecuteSearchIncompleteAsync number: {i} of {maxTries}, with delay of {delayMilliseconds/1000} seconds");
+                    // Check if process is cancelled by Client
+                    cancellationToken.ThrowIfCancellationRequested();
 
-                    // wait 
-                    Task.Delay(delayMilliseconds).Wait();
+                    // Use the date in your format
+                    string departDateString = departDate.ToString("yyyy-MM-dd");
+                    string returnDateString = returnDate.ToString("yyyy-MM-dd");
 
-                    var resultSearchIncomplete = ExecuteSearchIncompleteAsync(sessionId, currency);
-
-                    var searchIncompleteData = resultSearchIncomplete?.Result?.data;
-                    _logger.LogInformation($"resultSearchIncomplete Status: {searchIncompleteData?.context?.status}");
-
-                    if (searchIncompleteData?.context.status == "complete")
-                    {
-                        resultToReturn += ProcessResult(resultSearchIncomplete.Result, limitFlightHour);
-                        break;
-
-                    } else if (i == 5)
-                    {
-                        return resultToReturn;
-                    }
-                }
-
-            }
-
-            return resultToReturn;
-            
-            
-        }
-
-        private string ProcessResult(SearchIncompleteResponse result, int limitFlightHour)
-        {
-            StringBuilder resultProcessed = new StringBuilder();
-
-            // For each itineraty:
-            int count = 0;
-            int countLimit = 5;
-            foreach (var itinerary in result.data.itineraries)
-            {
-                if (count > countLimit)
-                {
-                    break;
-                }
-                // Add count
-                count++;
-
-                var company = "not defined";
-
-                // Sum duration of all legs
-                int durationHours = 0;
-                itinerary.legs.ForEach(l => durationHours = +l.durationInMinutes/60);
-                if (durationHours > limitFlightHour)
-                {
-                    continue;
-                }
-
-                var price = itinerary.price.raw;
-                if (itinerary.legs.Count > 0 && itinerary.legs[0].carriers != null && itinerary.legs[0].carriers.marketing.Count >0)
-                {
-                    company = itinerary.legs[0].carriers.marketing[0].name;
-                }
-                resultProcessed.Append($"Price: {price} - Hours: {durationHours} - Company: {company}\n" );
-            }
-
-
-            return resultProcessed.ToString();
-        }
-
-        private async Task<SearchRoundTripResponse> ExecuteSearchRoundTripAsync(string from, string to, string currency, string departDate, string returnDate)
-        {
-            var client = new HttpClient();
-            var uri = $"https://sky-scanner3.p.rapidapi.com/flights/search-roundtrip?fromEntityId={from}&toEntityId={to}&departDate={departDate}&returnDate={returnDate}&currency={currency}&stops=direct%2C1stop&adults=2&sort=cheapest_first";
-            //_logger.LogInformation($"ExecuteSearchRoundTripAsync with URI: {uri}");
-            
-            var request = new HttpRequestMessage
-            {
-                Method = HttpMethod.Get,
-                RequestUri = new Uri(uri),
-                Headers =
-                    {
-                        { "x-rapidapi-key", _rapidapi_key },
-                        { "x-rapidapi-host", "sky-scanner3.p.rapidapi.com" },
-                    },
-            };
-
-            try
-            {
-                using (var response = await client.SendAsync(request))
-                {
-                    response.EnsureSuccessStatusCode();
-                    //return await response.Content.ReadAsStringAsync();
-                    var jsonString = await response.Content.ReadAsStringAsync();
-                    return JsonSerializer.Deserialize<SearchRoundTripResponse>(jsonString);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogInformation("Error in ExecuteSearchRoundTripAsync "+ ex.ToString());
-            }
-            return new SearchRoundTripResponse();
-        }
-
-        private async Task<SearchIncompleteResponse> ExecuteSearchIncompleteAsync(string sessionId, string currency)
-        {
-            var client = new HttpClient();
-            var uri = $"https://sky-scanner3.p.rapidapi.com/flights/search-incomplete?sessionId={sessionId}&stops=direct%2C1stop&sort=cheapest_first&currency={currency}";
-            //_logger.LogInformation($"ExecuteSearchIncompleteAsync with URI: {uri}");
-
-
-            var request = new HttpRequestMessage
-            {
-                Method = HttpMethod.Get,
-                RequestUri = new Uri(uri),
-                Headers =
-                    {
-                        { "x-rapidapi-key", _rapidapi_key },
-                        { "x-rapidapi-host", "sky-scanner3.p.rapidapi.com" },
-                    },
-            };
-            string jsonString = "tbd";
-            try
-            {
-                using (var response = await client.SendAsync(request))
-                {
-                    response.EnsureSuccessStatusCode();
-                    //return await response.Content.ReadAsStringAsync();
-                    jsonString = await response.Content.ReadAsStringAsync();
+                    string headline = $"From {from} to {to}: Departure: {departDateString} Return date: {returnDateString}.";
                     
-                    return JsonSerializer.Deserialize<SearchIncompleteResponse>(jsonString);
+                    _logger.LogInformation(">>>>>>>>>>Starting: "+headline);
+
+                    resultToReturn.Append(headline);
+                    resultToReturn.Append('\n');
+                    
+
+                    string flights = _apiService.getRoundTrip(from, to, currency, departDateString, returnDateString, limitFlightHour, cancellationToken );
+
+                    resultToReturn.Append(flights);
+                    resultToReturn.Append('\n');
                 }
+
             }
-            catch (Exception ex)
+            return resultToReturn.ToString();
+        }
+
+        [HttpGet("getroundtrips")]
+        public async Task GetRoundTrips()
+        {
+            _logger.LogInformation(">>>>>>>>>>Starting: GetRoundTrips");
+            if (HttpContext.WebSockets.IsWebSocketRequest)
             {
-                //_logger.LogInformation("Content in jsonString: " + jsonString);
-                _logger.LogInformation("Error in ExecuteSearchIncompleteAsync " + ex.ToString());
+                using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+                await StreamGetRoundTripsAsync(webSocket);
             }
-            return new SearchIncompleteResponse();
+            else
+            {
+                _logger.LogInformation("Not a WebSocket request");
+                HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+            }
+            
+        }
+
+        private async Task StreamGetRoundTripsAsync(WebSocket webSocket)
+        {
+            for (int i = 1; i <= 5; i++)
+            {
+                _logger.LogInformation(">>>>>>>>>>Starting sending: " + i);
+                var message = $"Data chunk {i}";
+                var buffer = Encoding.UTF8.GetBytes(message);
+                await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+                await Task.Delay(1500); // Simulate processing delay
+            }
+
+            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Streaming complete", CancellationToken.None);
+
+        }
+
+        [HttpGet("airports")]
+        public GetAirportsResponseDTO GetAirports([FromQuery] string query)
+        {
+            return GetAirportsMapper.MapGetAirportsResponseToDTO(_apiService.GetAirportsAsync(query).Result);
         }
     }
 }

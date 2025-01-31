@@ -16,7 +16,7 @@
         public class Data
         {
             public Context context { get; set; }
-            public List<object> itineraries { get; set; }
+            public List<SearchIncompleteResponse.Itinerary> itineraries { get; set; }
             public List<object> messages { get; set; }
             public FilterStats filterStats { get; set; }
             public string flightsSessionId { get; set; }
