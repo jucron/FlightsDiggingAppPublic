@@ -5,11 +5,11 @@ using System.Text.Json;
 
 namespace FlightsDiggingApp.Services
 {
-    public class GetRoundTripsService
+    public class RoundTripsService
     {
         private readonly ILogger _logger;
         private readonly ApiService _apiService;
-        public GetRoundTripsService(ILogger logger, ApiService apiService)
+        public RoundTripsService(ILogger logger, ApiService apiService)
         {
             _logger = logger;
             _apiService = apiService;

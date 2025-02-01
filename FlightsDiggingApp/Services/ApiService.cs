@@ -3,6 +3,8 @@ using System.Text.Json;
 using System.Text;
 using FlightsDiggingApp.Controllers;
 using Microsoft.OpenApi.Any;
+using System.Threading;
+using FlightsDiggingApp.Mappers;
 
 namespace FlightsDiggingApp.Services
 {
@@ -16,12 +18,12 @@ namespace FlightsDiggingApp.Services
             _logger = logger;
         }
 
-        public string getRoundTrip(string from, string to, string currency, string departDateString, string returnDateString, int limitFlightHour, CancellationToken cancellationToken)
+        public string getRoundTrip_Legacy(string from, string to, string currency, string departDateString, string returnDateString, int limitFlightHour, CancellationToken cancellationToken)
         {
             string sessionId;
             string resultToReturn = "";
 
-            var resultSearchRoundTrip = ExecuteSearchRoundTripAsync(from, to, currency, departDateString, returnDateString);
+            var resultSearchRoundTrip = ExecuteSearchRoundTripAsync_Legacy(from, to, currency, departDateString, returnDateString);
 
             if (resultSearchRoundTrip.Result == null || resultSearchRoundTrip.Result.data == null)
             {
@@ -63,7 +65,7 @@ namespace FlightsDiggingApp.Services
                     // wait 
                     Task.Delay(delayMilliseconds).Wait();
 
-                    var resultSearchIncomplete = ExecuteSearchIncompleteAsync(sessionId, currency);
+                    var resultSearchIncomplete = ExecuteSearchIncompleteAsync_Legacy(sessionId, currency);
 
                     var searchIncompleteData = resultSearchIncomplete?.Result?.data;
                     //_logger.LogInformation($"resultSearchIncomplete Status: {searchIncompleteData?.context?.status}");
@@ -160,7 +162,7 @@ namespace FlightsDiggingApp.Services
             return resultProcessed.ToString();
         }
 
-        private async Task<SearchRoundTripResponse> ExecuteSearchRoundTripAsync(string from, string to, string currency, string departDate, string returnDate)
+        private async Task<SearchRoundTripResponse> ExecuteSearchRoundTripAsync_Legacy(string from, string to, string currency, string departDate, string returnDate)
         {
             var client = new HttpClient();
             var uri = $"https://sky-scanner3.p.rapidapi.com/flights/search-roundtrip?fromEntityId={from}&toEntityId={to}&departDate={departDate}&returnDate={returnDate}&currency={currency}&stops=direct%2C1stop&adults=2&sort=cheapest_first";
@@ -194,7 +196,7 @@ namespace FlightsDiggingApp.Services
             return new SearchRoundTripResponse();
         }
 
-        private async Task<SearchIncompleteResponse> ExecuteSearchIncompleteAsync(string sessionId, string currency)
+        private async Task<SearchIncompleteResponse> ExecuteSearchIncompleteAsync_Legacy(string sessionId, string currency)
         {
             var client = new HttpClient();
             var uri = $"https://sky-scanner3.p.rapidapi.com/flights/search-incomplete?sessionId={sessionId}&stops=direct%2C1stop&sort=cheapest_first&currency={currency}";
@@ -272,9 +274,155 @@ namespace FlightsDiggingApp.Services
             }
         }
 
-        internal GetRoundtripsResponse GetRoundtripAsync(GetRoundtripsRequest request)
+        public async Task<GetRoundtripsResponse> GetRoundtripAsync(GetRoundtripsRequest request)
         {
-            return new GetRoundtripsResponse() { currency = "TEST" };
+            var errorDescription = "Unexpected error/status";
+
+            SearchRoundTripResponse resultSearchRoundTrip = await ExecuteSearchRoundTripAsync(request);
+
+            if (resultSearchRoundTrip == null || resultSearchRoundTrip.data == null)
+            {
+                errorDescription = $"ExecuteSearchRoundTripAsync with NULL objects";
+                _logger.LogInformation(errorDescription);
+                return new GetRoundtripsResponse() { status = { hasError = true, errorDescription = errorDescription } };
+            }
+            var searchRoundTripData = resultSearchRoundTrip.data;
+            //_logger.LogInformation($"resultSearchRoundTrip Status: {searchRoundTripData.context.status}");
+
+            if (searchRoundTripData.context.status == "failure")
+            {
+                errorDescription = $"ExecuteSearchRoundTripAsync with status FAILURE";
+                _logger.LogInformation(errorDescription);
+                return new GetRoundtripsResponse() { status = { hasError = true, errorDescription = errorDescription } };
+            }
+            else if (searchRoundTripData.context.status == "complete")
+            {
+                // todo: handle complete responses from ExecuteSearchRoundTripAsync
+                errorDescription = $"ExecuteSearchRoundTripAsync with status COMPLETE. How to handle this?";
+                _logger.LogInformation(errorDescription);
+                return new GetRoundtripsResponse() { status = { hasError = true, errorDescription = errorDescription } };
+            }
+            else if (searchRoundTripData.context.status == "incomplete")
+            {
+                request.sessionId = searchRoundTripData.context.sessionId.TrimEnd('=');
+
+                //_logger.LogInformation($"sessionId: {sessionId}");
+
+                // tries 5 times
+                int maxTries = 5;
+                var delayMillisecondsDefault = 5000;
+
+                for (int i = 1; i <= maxTries; i++)
+                {
+                    var delayMilliseconds = delayMillisecondsDefault * Math.Max(1, (maxTries - i - 1));
+
+                    _logger.LogInformation($"ExecuteSearchIncompleteAsync for dates: {request.departDate} -> {request.returnDate}. Try number: {i} of {maxTries}, with delay of {delayMilliseconds / 1000} seconds");
+
+                    // wait 
+                    Task.Delay(delayMilliseconds).Wait();
+
+                    var resultSearchIncomplete = await ExecuteSearchIncompleteAsync(request);
+
+                    var searchIncompleteData = resultSearchIncomplete?.data;
+                    //_logger.LogInformation($"resultSearchIncomplete Status: {searchIncompleteData?.context?.status}");
+
+                    if (searchIncompleteData?.context.status == "complete")
+                    {
+                        return GetRoundtripsMapper.MapSearchIncompleteResponseToGetRoundtripsResponse(resultSearchIncomplete, request);
+
+                    }
+                    else if (i >= 5)
+                    {
+                        errorDescription = $"ExecuteSearchRoundTripAsync run out of maxTries.";
+                        _logger.LogInformation(errorDescription);
+                        return new GetRoundtripsResponse() { status = { hasError = true, errorDescription = errorDescription } };
+                    }
+                }
+            }
+            _logger.LogInformation(errorDescription);
+            return new GetRoundtripsResponse() { status = { hasError = true, errorDescription = errorDescription } };
+        }
+
+        private async Task<SearchIncompleteResponse> ExecuteSearchIncompleteAsync(GetRoundtripsRequest roundTripRequest)
+        {
+            // Data to be send
+            var sessionId = roundTripRequest.sessionId;
+            var currency = roundTripRequest.currency;
+
+            var client = new HttpClient();
+            var uri = $"https://sky-scanner3.p.rapidapi.com/flights/search-incomplete?sessionId={sessionId}&stops=direct%2C1stop&sort=cheapest_first&currency={currency}";
+            //_logger.LogInformation($"ExecuteSearchIncompleteAsync with URI: {uri}");
+
+
+            var request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(uri),
+                Headers =
+                    {
+                        { "x-rapidapi-key", _rapidapi_key },
+                        { "x-rapidapi-host", "sky-scanner3.p.rapidapi.com" },
+                    },
+            };
+            string jsonString = "not defined yet";
+            try
+            {
+                using (var response = await client.SendAsync(request))
+                {
+                    response.EnsureSuccessStatusCode();
+                    //return await response.Content.ReadAsStringAsync();
+                    jsonString = await response.Content.ReadAsStringAsync();
+
+                    return JsonSerializer.Deserialize<SearchIncompleteResponse>(jsonString);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation("Error in ExecuteSearchIncompleteAsync " + ex.ToString());
+                _logger.LogInformation("Content in jsonString: " + jsonString);
+            }
+            return new SearchIncompleteResponse();
+        }
+
+        private async Task<SearchRoundTripResponse> ExecuteSearchRoundTripAsync(GetRoundtripsRequest roundTripRequest)
+        {
+            // Data to be send
+            var from = roundTripRequest.from;
+            var to = roundTripRequest.to;
+            var departDate = roundTripRequest.departDate;
+            var returnDate = roundTripRequest.returnDate;
+            var currency = roundTripRequest.currency;
+
+            var client = new HttpClient();
+            var uri = $"https://sky-scanner3.p.rapidapi.com/flights/search-roundtrip?fromEntityId={from}&toEntityId={to}&departDate={departDate}&returnDate={returnDate}&currency={currency}&stops=direct%2C1stop&adults=2&sort=cheapest_first";
+            //_logger.LogInformation($"ExecuteSearchRoundTripAsync with URI: {uri}");
+
+            var request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(uri),
+                Headers =
+                    {
+                        { "x-rapidapi-key", _rapidapi_key },
+                        { "x-rapidapi-host", "sky-scanner3.p.rapidapi.com" },
+                    },
+            };
+
+            try
+            {
+                using (var response = await client.SendAsync(request))
+                {
+                    response.EnsureSuccessStatusCode();
+                    //return await response.Content.ReadAsStringAsync();
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<SearchRoundTripResponse>(jsonString);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation("Error in ExecuteSearchRoundTripAsync " + ex.ToString());
+            }
+            return new SearchRoundTripResponse();
         }
     }
 }
