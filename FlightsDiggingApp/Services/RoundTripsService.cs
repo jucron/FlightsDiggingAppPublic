@@ -2,6 +2,7 @@
 using System.Text;
 using FlightsDiggingApp.Models;
 using System.Text.Json;
+using FlightsDiggingApp.Mappers;
 
 namespace FlightsDiggingApp.Services
 {
@@ -25,12 +26,15 @@ namespace FlightsDiggingApp.Services
             result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
             receivedMessage = Encoding.UTF8.GetString(buffer, 0, result.Count);
 
+            _logger.LogInformation($"Received message before deserializing: {receivedMessage}");
+
             try
             {
                 var request = JsonSerializer.Deserialize<GetRoundtripsRequest>(receivedMessage, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
+
 
                 if (request != null)
                 {
@@ -52,12 +56,7 @@ namespace FlightsDiggingApp.Services
                         {
 
                             // Create a copy of the request for each iteration
-                            var requestCopy = request with
-                            {
-                                departDate = departDate.ToString("yyyy-MM-dd"),
-                                returnDate = returnDate.ToString("yyyy-MM-dd")
-                            };
-                            // Make a copy
+                            var requestCopy = GetRoundtripsMapper.CreateCopyOfGetRoundtripsRequest(request, departDate, returnDate);
 
                             // Add the request processing as a task to the list
                             tasks.Add(ProcessRoundtripAsync(requestCopy, webSocket));
@@ -90,7 +89,7 @@ namespace FlightsDiggingApp.Services
         {
             try
             {
-                GetRoundtripsResponse roundtripsResponse = _apiService.GetRoundtripAsync(requestCopy);
+                GetRoundtripsResponse roundtripsResponse = await _apiService.GetRoundtripAsync(requestCopy);
 
                 // Serialize response
                 var responseJson = JsonSerializer.Serialize(roundtripsResponse);

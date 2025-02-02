@@ -280,11 +280,11 @@ namespace FlightsDiggingApp.Services
 
             SearchRoundTripResponse resultSearchRoundTrip = await ExecuteSearchRoundTripAsync(request);
 
-            if (resultSearchRoundTrip == null || resultSearchRoundTrip.data == null)
+            if (resultSearchRoundTrip == null || resultSearchRoundTrip.data == null || resultSearchRoundTrip.data.context == null)
             {
                 errorDescription = $"ExecuteSearchRoundTripAsync with NULL objects";
                 _logger.LogInformation(errorDescription);
-                return new GetRoundtripsResponse() { status = { hasError = true, errorDescription = errorDescription } };
+                return new GetRoundtripsResponse() { status = new () { hasError = true, errorDescription = errorDescription } };
             }
             var searchRoundTripData = resultSearchRoundTrip.data;
             //_logger.LogInformation($"resultSearchRoundTrip Status: {searchRoundTripData.context.status}");
@@ -293,14 +293,14 @@ namespace FlightsDiggingApp.Services
             {
                 errorDescription = $"ExecuteSearchRoundTripAsync with status FAILURE";
                 _logger.LogInformation(errorDescription);
-                return new GetRoundtripsResponse() { status = { hasError = true, errorDescription = errorDescription } };
+                return new GetRoundtripsResponse() { status = new() { hasError = true, errorDescription = errorDescription } };
             }
             else if (searchRoundTripData.context.status == "complete")
             {
                 // todo: handle complete responses from ExecuteSearchRoundTripAsync
                 errorDescription = $"ExecuteSearchRoundTripAsync with status COMPLETE. How to handle this?";
                 _logger.LogInformation(errorDescription);
-                return new GetRoundtripsResponse() { status = { hasError = true, errorDescription = errorDescription } };
+                return new GetRoundtripsResponse() { status = new() { hasError = true, errorDescription = errorDescription } };
             }
             else if (searchRoundTripData.context.status == "incomplete")
             {
@@ -335,12 +335,12 @@ namespace FlightsDiggingApp.Services
                     {
                         errorDescription = $"ExecuteSearchRoundTripAsync run out of maxTries.";
                         _logger.LogInformation(errorDescription);
-                        return new GetRoundtripsResponse() { status = { hasError = true, errorDescription = errorDescription } };
+                        return new GetRoundtripsResponse() { status = new() { hasError = true, errorDescription = errorDescription } };
                     }
                 }
             }
             _logger.LogInformation(errorDescription);
-            return new GetRoundtripsResponse() { status = { hasError = true, errorDescription = errorDescription } };
+            return new GetRoundtripsResponse() { status = new() { hasError = true, errorDescription = errorDescription } };
         }
 
         private async Task<SearchIncompleteResponse> ExecuteSearchIncompleteAsync(GetRoundtripsRequest roundTripRequest)
@@ -392,10 +392,14 @@ namespace FlightsDiggingApp.Services
             var departDate = roundTripRequest.departDate;
             var returnDate = roundTripRequest.returnDate;
             var currency = roundTripRequest.currency;
+            var adults = roundTripRequest.adults;
+            var cabinclass = roundTripRequest.cabinclass;
+            var infants = roundTripRequest.infants;
+            var children = roundTripRequest.children.Count;
 
             var client = new HttpClient();
-            var uri = $"https://sky-scanner3.p.rapidapi.com/flights/search-roundtrip?fromEntityId={from}&toEntityId={to}&departDate={departDate}&returnDate={returnDate}&currency={currency}&stops=direct%2C1stop&adults=2&sort=cheapest_first";
-            //_logger.LogInformation($"ExecuteSearchRoundTripAsync with URI: {uri}");
+            var uri = $"https://sky-scanner3.p.rapidapi.com/flights/search-roundtrip?fromEntityId={from}&toEntityId={to}&departDate={departDate}&returnDate={returnDate}&currency={currency}&adults={adults}&cabinClass={cabinclass}&infants={infants}&children={children}&sort=cheapest_first";
+            _logger.LogInformation($"ExecuteSearchRoundTripAsync with URI: {uri}");
 
             var request = new HttpRequestMessage
             {

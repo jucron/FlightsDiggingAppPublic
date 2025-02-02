@@ -9,9 +9,13 @@ namespace FlightsDiggingApp.Models
         public string departDate;
         public string returnDate;
         public string currency;
+        public string link;
+        public int adults;
+        public List<Child> children;
+        public int infants;
+        public string cabinclass;
 
         public List<Flight> flights;
-
         public Status status { get; set; }
         public record Status
         {
@@ -23,8 +27,18 @@ namespace FlightsDiggingApp.Models
             public double rawPrice;
             public int hours;
             public string stops;
-            public string company;
+            public List<Company> companies;
 
+        }
+
+        public record Company
+        {
+            public string logoUrl;
+            public string name;
+        }
+        public record Child 
+        {
+            public int age;
         }
     }
     
