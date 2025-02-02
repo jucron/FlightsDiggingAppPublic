@@ -2,30 +2,67 @@
 
 namespace FlightsDiggingApp.Models
 {
-    public record GetRoundtripsResponse
+    public class GetRoundtripsResponse
     {
-        public string from;
-        public string to;
-        public string departDate;
-        public string returnDate;
-        public string currency;
+        public string from { set; get; }
+        public string to { set; get; }
+        public string departDate{ set; get; }
+        public string returnDate{ set; get; }
+        public string currency{ set; get; }
+        public string link{ set; get; }
+        public int adults{ set; get; }
+        public List<Child> children{ set; get; }
+        public int infants{ set; get; }
+        public string cabinclass{ set; get; }
 
-        public List<Flight> flights;
-
-        public Status status { get; set; }
+        public List<Flight> flights{ set; get; }
+        public Status status { set; get; }
         public record Status
         {
-            public bool hasError;
-            public string errorDescription;
+            public bool hasError{ set; get; }
+            public string errorDescription{ set; get; }
         }
         public record Flight
         {
-            public double rawPrice;
-            public int hours;
-            public string stops;
-            public string company;
+            public double rawPrice{ set; get; }
+            public int hours{ set; get; }
+            public string stops{ set; get; }
+            public List<Company> companies{ set; get; }
 
+        }
+
+        public record Company
+        {
+            public string logoUrl{ set; get; }
+            public string name{ set; get; }
+        }
+        public record Child 
+        {
+            public int age{ set; get; }
         }
     }
     
 }
+/*
+ * example for test: wss://localhost:7253/api/flightsdigger/getroundtrips
+  {
+  "from": "GIG",
+  "to": "OPO",
+  "currency": "BRL",
+  "adults": 2,
+  "children": [
+    { "age": 3 },
+    { "age": 7 }
+  ],
+  "infants": 0,
+  "cabinclass": "economy",
+  "initDepartDateString": "2025-06-06",
+  "endDepartDateString": "2025-06-06",
+  "initReturnDateString": "2025-06-25",
+  "endReturnDateString": "2025-06-25",
+  "departDate": "",
+  "returnDate": "",
+  "sessionId": ""
+}
+ * 
+ */

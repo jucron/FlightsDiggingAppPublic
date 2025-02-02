@@ -2,19 +2,22 @@
 
 namespace FlightsDiggingApp.Models
 {
-    public record GetRoundtripsRequest
+    public class GetRoundtripsRequest
     {
-        public string from;
-        public string to;
-        public string currency;
-        public int adults;
-        public int childs;
-        public string initDepartDateString;
-        public string endDepartDateString;
-        public string initReturnDateString;
-        public string endReturnDateString;
-        public string departDate;
-        public string returnDate;
-        public string sessionId;
+        public string from { get; set; }
+        public string to { get; set; }
+        public string currency { get; set; }
+        public int adults { get; set; }
+        public List<GetRoundtripsResponse.Child> children { get; set; }
+        public int infants { get; set; }
+        public string cabinclass { get; set; }
+        public string initDepartDateString { get; set; }
+        public string endDepartDateString { get; set; }
+        public string initReturnDateString { get; set; }
+        public string endReturnDateString { get; set; }
+        public string departDate { get; set; }
+        public string returnDate { get; set; }
+        public string sessionId { get; set; }
+
     }
 }
