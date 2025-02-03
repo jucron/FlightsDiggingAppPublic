@@ -1,3 +1,5 @@
+using FlightsDiggingApp.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -24,6 +26,11 @@ builder.Services.AddCors(options =>
               .AllowCredentials();
     });
 });
+
+// Registering Dependency Injection
+builder.Services.AddSingleton<IApiService, ApiService>();
+builder.Services.AddSingleton<IFlightsDiggerService, FlightsDiggerService>();
+
 
 var app = builder.Build();
 

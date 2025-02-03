@@ -6,17 +6,22 @@ using FlightsDiggingApp.Mappers;
 
 namespace FlightsDiggingApp.Services
 {
-    public class RoundTripsService
+    public class FlightsDiggerService: IFlightsDiggerService
     {
-        private readonly ILogger _logger;
-        private readonly ApiService _apiService;
-        public RoundTripsService(ILogger logger, ApiService apiService)
+        private readonly ILogger<FlightsDiggerService> _logger;
+        private readonly IApiService _apiService;
+        public FlightsDiggerService(ILogger<FlightsDiggerService> logger, IApiService apiService)
         {
             _logger = logger;
             _apiService = apiService;
         }
 
-        internal async Task HandleRoundTripsAsync(WebSocket webSocket)
+        public Task<GetAirportsResponse> GetAirports(string query)
+        {
+            return _apiService.GetAirportsAsync(query);
+        }
+
+        public async Task HandleRoundTripsAsync(WebSocket webSocket)
         {
             var buffer = new byte[1024 * 4];
             WebSocketReceiveResult result;
@@ -84,7 +89,7 @@ namespace FlightsDiggingApp.Services
                 await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Finished sending data", CancellationToken.None);
             }
         }
-
+        
         private async Task ProcessRoundtripAsync(GetRoundtripsRequest requestCopy, WebSocket webSocket)
         {
             try
