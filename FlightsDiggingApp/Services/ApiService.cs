@@ -18,9 +18,11 @@ namespace FlightsDiggingApp.Services
             _logger = logger;
         }
 
-        public async Task<GetAirportsResponse> GetAirportsAsync(string query)
+        // tries is optional parameter
+
+        public async Task<GetAirportsResponse> GetAirportsAsync(string query, int tries = 3)
         {
-            _logger.LogInformation($"GetAirportsAsync with query: {query}");
+            _logger.LogInformation($"GetAirportsAsync with query: <{query}>. Tries left: {tries-1}");
             //trim whitespaces of query at ends
             query = query.Trim();
             query = query.Replace(" ", "%20");
@@ -46,16 +48,21 @@ namespace FlightsDiggingApp.Services
                         GetAirportsResponse finalResponse = JsonSerializer.Deserialize<GetAirportsResponse>(jsonString);
                         if (finalResponse != null)
                         {
+                            finalResponse.operationStatus = OperationStatus.CreateStatusSuccess();
                             return finalResponse;
                         }
                     }
-                    return new GetAirportsResponse() { message = "error" };
+                    return new GetAirportsResponse() { operationStatus = OperationStatus.CreateStatusFailure("Unexpected error -> jsonstring from response API is null") };
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogInformation("Error in ExecuteSearchIncompleteAsync " + ex.ToString());
-                return new GetAirportsResponse() { message = "error" };
+                if (tries > 1)
+                {
+                    return await GetAirportsAsync(query, tries-1);
+                }
+                return new GetAirportsResponse() { operationStatus = OperationStatus.CreateStatusFailure("Unexpected error -> "+ex.ToString()) };
             }
         }
 
@@ -69,7 +76,7 @@ namespace FlightsDiggingApp.Services
             {
                 errorDescription = $"ExecuteSearchRoundTripAsync with NULL objects";
                 _logger.LogInformation(errorDescription);
-                return new GetRoundtripsResponse() { status = new () { hasError = true, errorDescription = errorDescription } };
+                return new GetRoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
             }
             var searchRoundTripData = resultSearchRoundTrip.data;
             //_logger.LogInformation($"resultSearchRoundTrip Status: {searchRoundTripData.context.status}");
@@ -78,14 +85,14 @@ namespace FlightsDiggingApp.Services
             {
                 errorDescription = $"ExecuteSearchRoundTripAsync with status FAILURE";
                 _logger.LogInformation(errorDescription);
-                return new GetRoundtripsResponse() { status = new() { hasError = true, errorDescription = errorDescription } };
+                return new GetRoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
             }
             else if (searchRoundTripData.context.status == "complete")
             {
                 // todo: handle complete responses from ExecuteSearchRoundTripAsync
                 errorDescription = $"ExecuteSearchRoundTripAsync with status COMPLETE. How to handle this?";
                 _logger.LogInformation(errorDescription);
-                return new GetRoundtripsResponse() { status = new() { hasError = true, errorDescription = errorDescription } };
+                return new GetRoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
             }
             else if (searchRoundTripData.context.status == "incomplete")
             {
@@ -96,6 +103,9 @@ namespace FlightsDiggingApp.Services
                 // tries 5 times
                 int maxTries = 5;
                 var delayMillisecondsDefault = 5000;
+
+                // Error description in case tries exceed
+                errorDescription = $"ExecuteSearchRoundTripAsync run out of maxTries!";
 
                 for (int i = 1; i <= maxTries; i++)
                 {
@@ -110,9 +120,8 @@ namespace FlightsDiggingApp.Services
 
                     if (resultSearchIncomplete == null || resultSearchIncomplete.data == null || resultSearchIncomplete.data.context == null)
                     {
-                        errorDescription = $"ExecuteSearchIncompleteAsync with NULL objects";
-                        _logger.LogInformation(errorDescription);
-                        return new GetRoundtripsResponse() { status = new() { hasError = true, errorDescription = errorDescription } };
+                        errorDescription = $"ExecuteSearchIncompleteAsync with NULL objects!";
+                        continue;
                     }
 
                     var searchIncompleteData = resultSearchIncomplete.data;
@@ -120,14 +129,8 @@ namespace FlightsDiggingApp.Services
 
                     if (searchIncompleteData?.context.status == "complete")
                     {
+                        // Success
                         return GetRoundtripsMapper.MapSearchIncompleteResponseToGetRoundtripsResponse(resultSearchIncomplete, request);
-
-                    }
-                    else if (i >= 5)
-                    {
-                        errorDescription = $"ExecuteSearchRoundTripAsync run out of maxTries.";
-                        _logger.LogInformation(errorDescription);
-                        return new GetRoundtripsResponse() { status = new() { hasError = true, errorDescription = errorDescription } };
                     }
                 }
             }

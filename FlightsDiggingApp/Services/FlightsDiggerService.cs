@@ -16,9 +16,14 @@ namespace FlightsDiggingApp.Services
             _apiService = apiService;
         }
 
-        public Task<GetAirportsResponse> GetAirports(string query)
+        public GetAirportsResponseDTO GetAirports(string query)
         {
-            return _apiService.GetAirportsAsync(query);
+            var response = _apiService.GetAirportsAsync(query).Result;
+            if (response == null)
+            {
+                return new GetAirportsResponseDTO() { status = OperationStatus.CreateStatusFailure("Response from external API is null")};
+            }
+            return GetAirportsMapper.MapGetAirportsResponseToDTO(response);
         }
 
         public async Task HandleRoundTripsAsync(WebSocket webSocket)
@@ -51,7 +56,8 @@ namespace FlightsDiggingApp.Services
                     DateTime startReturnDate = DateTime.Parse(request.initReturnDateString);
                     DateTime endReturnDate = DateTime.Parse(request.endReturnDateString);
 
-
+                    int batchSize = 5;
+                    var semaphore = new SemaphoreSlim(batchSize);
                     var tasks = new List<Task>();  // Store tasks for concurrent execution
 
                     for (DateTime departDate = startDepartDate; departDate <= endDepartDate; departDate = departDate.AddDays(1))
@@ -64,7 +70,14 @@ namespace FlightsDiggingApp.Services
                             var requestCopy = GetRoundtripsMapper.CreateCopyOfGetRoundtripsRequest(request, departDate, returnDate);
 
                             // Add the request processing as a task to the list
-                            tasks.Add(ProcessRoundtripAsync(requestCopy, webSocket));
+                            tasks.Add(ProcessRoundtripAsyncWithConcurrencyControl(requestCopy, webSocket, semaphore));
+
+                            if (tasks.Count >= batchSize)
+                            {
+                                await Task.WhenAll(tasks);
+                                tasks.Clear();
+                            }
+                            await Task.Delay(500);
                         }
                     }
                     // Wait for all tasks to complete before finishing
@@ -89,19 +102,32 @@ namespace FlightsDiggingApp.Services
                 await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Finished sending data", CancellationToken.None);
             }
         }
-        
+
+        private async Task ProcessRoundtripAsyncWithConcurrencyControl(GetRoundtripsRequest request, WebSocket webSocket, SemaphoreSlim semaphore)
+        {
+            await semaphore.WaitAsync(); // Wait for an available slot
+            try
+            {
+                await ProcessRoundtripAsync(request, webSocket);
+            }
+            finally
+            {
+                semaphore.Release(); // Release the slot for the next task
+            }
+        }
+
         private async Task ProcessRoundtripAsync(GetRoundtripsRequest requestCopy, WebSocket webSocket)
         {
             try
             {
                 GetRoundtripsResponse roundtripsResponse = await _apiService.GetRoundtripAsync(requestCopy);
-                roundtripsResponse.status = new() { hasError = false };
+                GetRoundtripsResponseDTO getRoundtripsResponseDTO = GetRoundtripsMapper.MapGetRoundtripsResponseToDTO(roundtripsResponse);
                 // Log some detailed properties
-                _logger.LogInformation($"RoundtripsResponse Status: {roundtripsResponse.status}");
-                _logger.LogInformation($"Flights Count: {roundtripsResponse.flights?.Count ?? 0}");
+                _logger.LogInformation($"RoundtripsResponse Status: {getRoundtripsResponseDTO.status}");
+                _logger.LogInformation($"Flights Count: {getRoundtripsResponseDTO.data.flights?.Count ?? 0}");
 
                 // Serialize response
-                var responseJson = JsonSerializer.Serialize(roundtripsResponse, new JsonSerializerOptions
+                var responseJson = JsonSerializer.Serialize(getRoundtripsResponseDTO, new JsonSerializerOptions
                 {
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                 });

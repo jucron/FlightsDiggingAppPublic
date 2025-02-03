@@ -5,16 +5,16 @@ namespace FlightsDiggingApp.Mappers
 {
     public class GetAirportsMapper
     {
-        public static GetAirportsResponseDTO MapGetAirportsResponseToDTO(GetAirportsResponse GetAirportsResponse)
+        public static GetAirportsResponseDTO MapGetAirportsResponseToDTO(GetAirportsResponse getAirportsResponse)
         {
             var response = new GetAirportsResponseDTO();
             response.AirportOptions = new List<AirportOption>();
-            if (GetAirportsResponse.data == null)
+            if (getAirportsResponse.data == null)
             {
                 return response;
             }
 
-            foreach (var airportResponse in GetAirportsResponse.data)
+            foreach (var airportResponse in getAirportsResponse.data)
             {
                 response.AirportOptions.Add(new AirportOption
                 {
@@ -22,6 +22,7 @@ namespace FlightsDiggingApp.Mappers
                     id = airportResponse.navigation.relevantFlightParams.skyId
                 });
             }
+            response.status = getAirportsResponse.operationStatus;
             return response;
 
         }

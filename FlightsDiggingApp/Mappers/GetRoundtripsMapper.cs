@@ -8,11 +8,9 @@ namespace FlightsDiggingApp.Mappers
     public class GetRoundtripsMapper
     {
         private static readonly int _maxItineraries = 200;
-        public static GetRoundtripDTO MapGetRoundtripsResponseToDTO(SearchIncompleteResponse searchIncompleteResponse)
+        public static GetRoundtripsResponseDTO MapGetRoundtripsResponseToDTO(GetRoundtripsResponse getRoundtripsResponse)
         {
-           //todo
-            return new GetRoundtripDTO();
-
+            return new GetRoundtripsResponseDTO() { data = getRoundtripsResponse, status = getRoundtripsResponse.status };
         }
 
         public static GetRoundtripsRequest CreateCopyOfGetRoundtripsRequest(GetRoundtripsRequest request, DateTime departDate, DateTime returnDate)
@@ -38,6 +36,11 @@ namespace FlightsDiggingApp.Mappers
 
         internal static GetRoundtripsResponse MapSearchIncompleteResponseToGetRoundtripsResponse(SearchIncompleteResponse result, GetRoundtripsRequest request)
         {
+            if (result == null || result.data == null || result.data.itineraries.Count == 0)
+            {
+                var errorDescription = $"SearchIncompleteResponse has no proper data.";
+                return new GetRoundtripsResponse() { status = { hasError = true, errorDescription = errorDescription } };
+            }
             var response = new GetRoundtripsResponse();
 
             // Same data as request
@@ -51,64 +54,56 @@ namespace FlightsDiggingApp.Mappers
             response.infants = request.infants;
             response.cabinclass = request.cabinclass;
             response.flights = new List<GetRoundtripsResponse.Flight>();
+            response.status = OperationStatus.CreateStatusSuccess();
 
-            if (result != null && result.data != null && result.data.itineraries.Count > 0)
+            // For each itineraty:
+            int count = 0;
+            foreach (var itinerary in result.data.itineraries)
             {
-                // For each itineraty:
-                int count = 0;
-                foreach (var itinerary in result.data.itineraries)
+
+                var flight = new GetRoundtripsResponse.Flight();
+
+                if (count > _maxItineraries)
                 {
+                    break;
+                }
+                // Add count
+                count++;
 
-                    var flight = new GetRoundtripsResponse.Flight();
+                // Data to be fetched
+                var price = itinerary.price.raw;
+                List<GetRoundtripsResponse.Company> companies = new List<GetRoundtripsResponse.Company>();
+                int durationHours = 0;
 
-                    if (count > _maxItineraries)
+                foreach (var leg in itinerary.legs)
+                {
+                    // Sum duration of all legs
+                    durationHours = +(leg.durationInMinutes / 60);
+
+                    // Add companies to this flight
+                    foreach (var marketingCarrier in leg.carriers.marketing)
                     {
-                        break;
-                    }
-                    // Add count
-                    count++;
-
-                    // Data to be fetched
-                    var price = itinerary.price.raw;
-                    List<GetRoundtripsResponse.Company> companies = new List<GetRoundtripsResponse.Company>();
-                    int durationHours = 0;
-
-                    foreach (var leg in itinerary.legs)
-                    {
-                        // Sum duration of all legs
-                        durationHours =+ (leg.durationInMinutes / 60);
-
-                        // Add companies to this flight
-                        foreach (var marketingCarrier in leg.carriers.marketing)
+                        // Add if there is no company with the same name
+                        if (!companies.Any(c => c.name == marketingCarrier.name))
                         {
-                            // Add if there is no company with the same name
-                            if (!companies.Any(c => c.name == marketingCarrier.name))
+                            companies.Add(new GetRoundtripsResponse.Company
                             {
-                                companies.Add(new GetRoundtripsResponse.Company
-                                {
-                                    name = marketingCarrier.name,
-                                    logoUrl = marketingCarrier.logoUrl
-                                });
-                            }
+                                name = marketingCarrier.name,
+                                logoUrl = marketingCarrier.logoUrl
+                            });
                         }
                     }
-
-
-                    flight.hours = durationHours;
-                    flight.rawPrice = price;
-                    flight.companies = companies;
-
-                    
-                    response.flights.Add(flight);
-                    response.link = GenerateLinkByResponse(response);
                 }
-            }
-            else
-            {
-                var errorDescription = $"SearchIncompleteResponse has no proper data.";
-                return new GetRoundtripsResponse() { status = { hasError = true, errorDescription = errorDescription } };
-            }
 
+
+                flight.hours = durationHours;
+                flight.rawPrice = price;
+                flight.companies = companies;
+
+
+                response.flights.Add(flight);
+                response.link = GenerateLinkByResponse(response);
+            }
             return response;
         }
 

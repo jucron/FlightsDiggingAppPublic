@@ -16,12 +16,8 @@ namespace FlightsDiggingApp.Models
         public string cabinclass{ set; get; }
 
         public List<Flight> flights{ set; get; }
-        public Status status { set; get; }
-        public record Status
-        {
-            public bool hasError{ set; get; }
-            public string errorDescription{ set; get; }
-        }
+        public OperationStatus status { set; get; }
+        
         public record Flight
         {
             public double rawPrice{ set; get; }

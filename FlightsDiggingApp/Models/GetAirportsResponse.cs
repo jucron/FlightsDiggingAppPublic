@@ -4,7 +4,6 @@
     {
         public List<Datum> data { get; set; }
         public bool status { get; set; }
-        public string message { get; set; }
         public class Datum
         {
             public Presentation presentation { get; set; }
@@ -43,6 +42,6 @@
             public string localizedName { get; set; }
         }
 
-
+        public OperationStatus operationStatus { get; set; }
     }
 }

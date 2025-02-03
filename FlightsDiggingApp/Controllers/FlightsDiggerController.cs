@@ -45,7 +45,7 @@ namespace FlightsDiggingApp.Controllers
         [HttpGet("airports")]
         public GetAirportsResponseDTO GetAirports([FromQuery] string query)
         {
-            return GetAirportsMapper.MapGetAirportsResponseToDTO(_flightsDiggerService.GetAirports(query).Result);
+            return _flightsDiggerService.GetAirports(query);
         }
     }
 }

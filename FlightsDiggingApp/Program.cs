@@ -31,7 +31,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddSingleton<IApiService, ApiService>();
 builder.Services.AddSingleton<IFlightsDiggerService, FlightsDiggerService>();
 
-
+// Build App
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
