@@ -6,6 +6,6 @@ namespace FlightsDiggingApp.Services
     {
         public Task<GetAirportsResponse> GetAirportsAsync(string query, int tries = 3);
 
-        public Task<GetRoundtripsResponse> GetRoundtripAsync(GetRoundtripsRequest request);
+        public Task<GetRoundtripsResponse> GetRoundtripAsync(GetRoundtripsRequest request, int tries = 3, string errorDescription = "Unexpected error/status");
     }
 }

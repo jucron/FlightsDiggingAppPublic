@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35527.113 d17.12
+VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlightsDiggingApp", "FlightsDiggingApp\FlightsDiggingApp.csproj", "{4CAA1888-A0D9-4085-B9BC-09A01CA852EE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{A6E91B21-AD5A-4DC6-A182-3F8DAF841599}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{4CAA1888-A0D9-4085-B9BC-09A01CA852EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4CAA1888-A0D9-4085-B9BC-09A01CA852EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4CAA1888-A0D9-4085-B9BC-09A01CA852EE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6E91B21-AD5A-4DC6-A182-3F8DAF841599}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6E91B21-AD5A-4DC6-A182-3F8DAF841599}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6E91B21-AD5A-4DC6-A182-3F8DAF841599}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6E91B21-AD5A-4DC6-A182-3F8DAF841599}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

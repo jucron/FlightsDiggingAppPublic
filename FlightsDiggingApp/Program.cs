@@ -30,6 +30,8 @@ builder.Services.AddCors(options =>
 // Registering Dependency Injection
 builder.Services.AddSingleton<IApiService, ApiService>();
 builder.Services.AddSingleton<IFlightsDiggerService, FlightsDiggerService>();
+builder.Services.AddSingleton<IFilterService, FilterService>();
+builder.Services.AddSingleton<ICacheService, CacheService>();
 
 // Build App
 var app = builder.Build();

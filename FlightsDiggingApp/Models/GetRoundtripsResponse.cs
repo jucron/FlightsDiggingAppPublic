@@ -20,9 +20,10 @@ namespace FlightsDiggingApp.Models
         
         public record Flight
         {
-            public double rawPrice{ set; get; }
-            public int hours{ set; get; }
-            public string stops{ set; get; }
+            public double rawPrice { set; get; }
+            public int hours { set; get; }
+            public int stops { set; get; }
+            public double score { set; get; }
             public List<Company> companies{ set; get; }
 
         }

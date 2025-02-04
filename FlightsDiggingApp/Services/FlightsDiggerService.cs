@@ -10,10 +10,14 @@ namespace FlightsDiggingApp.Services
     {
         private readonly ILogger<FlightsDiggerService> _logger;
         private readonly IApiService _apiService;
-        public FlightsDiggerService(ILogger<FlightsDiggerService> logger, IApiService apiService)
+        private readonly IFilterService _filterService;
+        private readonly ICacheService _cacheService;
+        public FlightsDiggerService(ILogger<FlightsDiggerService> logger, IApiService apiService, IFilterService filterService, ICacheService cacheService)
         {
             _logger = logger;
             _apiService = apiService;
+            _filterService = filterService;
+            _cacheService = cacheService;
         }
 
         public GetAirportsResponseDTO GetAirports(string query)
@@ -70,7 +74,7 @@ namespace FlightsDiggingApp.Services
                             var requestCopy = GetRoundtripsMapper.CreateCopyOfGetRoundtripsRequest(request, departDate, returnDate);
 
                             // Add the request processing as a task to the list
-                            tasks.Add(ProcessRoundtripAsyncWithConcurrencyControl(requestCopy, webSocket, semaphore));
+                            tasks.Add(ProcessRoundtripAsyncWithConcurrentControl(requestCopy, webSocket, semaphore));
 
                             if (tasks.Count >= batchSize)
                             {
@@ -103,7 +107,7 @@ namespace FlightsDiggingApp.Services
             }
         }
 
-        private async Task ProcessRoundtripAsyncWithConcurrencyControl(GetRoundtripsRequest request, WebSocket webSocket, SemaphoreSlim semaphore)
+        private async Task ProcessRoundtripAsyncWithConcurrentControl(GetRoundtripsRequest request, WebSocket webSocket, SemaphoreSlim semaphore)
         {
             await semaphore.WaitAsync(); // Wait for an available slot
             try
@@ -120,14 +124,24 @@ namespace FlightsDiggingApp.Services
         {
             try
             {
+                // Call external API
                 GetRoundtripsResponse roundtripsResponse = await _apiService.GetRoundtripAsync(requestCopy);
+
+                // Map the response into DTO object (cleaning)
                 GetRoundtripsResponseDTO getRoundtripsResponseDTO = GetRoundtripsMapper.MapGetRoundtripsResponseToDTO(roundtripsResponse);
+
+                // Persist in cache for future filterings
+                _cacheService.StoreGetRoundtripsResponseDTO(getRoundtripsResponseDTO);
+
+                // Apply filter the DTO before sending it to front
+                GetRoundtripsResponseDTO filteredResponseDTO = _filterService.FilterFlightsFromGetRoundtripsResponseDTO(requestCopy.filter,getRoundtripsResponseDTO);
+
                 // Log some detailed properties
-                _logger.LogInformation($"RoundtripsResponse Status: {getRoundtripsResponseDTO.status}");
-                _logger.LogInformation($"Flights Count: {getRoundtripsResponseDTO.data.flights?.Count ?? 0}");
+                _logger.LogInformation($"RoundtripsResponse Status: {filteredResponseDTO.status}");
+                _logger.LogInformation($"Flights Count: {filteredResponseDTO.data.flights?.Count ?? 0}");
 
                 // Serialize response
-                var responseJson = JsonSerializer.Serialize(getRoundtripsResponseDTO, new JsonSerializerOptions
+                var responseJson = JsonSerializer.Serialize(filteredResponseDTO, new JsonSerializerOptions
                 {
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                 });

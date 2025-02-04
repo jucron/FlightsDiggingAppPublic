@@ -5,6 +5,7 @@ using FlightsDiggingApp.Controllers;
 using Microsoft.OpenApi.Any;
 using System.Threading;
 using FlightsDiggingApp.Mappers;
+using Microsoft.Extensions.Logging;
 
 namespace FlightsDiggingApp.Services
 {
@@ -66,16 +67,17 @@ namespace FlightsDiggingApp.Services
             }
         }
 
-        public async Task<GetRoundtripsResponse> GetRoundtripAsync(GetRoundtripsRequest request)
+        public async Task<GetRoundtripsResponse> GetRoundtripAsync(GetRoundtripsRequest request, int tries, string errorDescription)
         {
-            var errorDescription = "Unexpected error/status";
+            var delayMillisecondsDefault = 1000;
 
             SearchRoundTripResponse resultSearchRoundTrip = await ExecuteSearchRoundTripAsync(request);
-
+            
             if (resultSearchRoundTrip == null || resultSearchRoundTrip.data == null || resultSearchRoundTrip.data.context == null)
             {
-                errorDescription = $"ExecuteSearchRoundTripAsync with NULL objects";
+                errorDescription = $"ExecuteSearchRoundTripAsync with NULL objects, try remaining: {tries}";
                 _logger.LogInformation(errorDescription);
+                if (tries > 1) { return await GetRoundtripAsync(request, tries - 1, errorDescription); }
                 return new GetRoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
             }
             var searchRoundTripData = resultSearchRoundTrip.data;
@@ -83,8 +85,9 @@ namespace FlightsDiggingApp.Services
 
             if (searchRoundTripData.context.status == "failure")
             {
-                errorDescription = $"ExecuteSearchRoundTripAsync with status FAILURE";
+                errorDescription = $"ExecuteSearchRoundTripAsync with status FAILURE, try remaining: {tries}";
                 _logger.LogInformation(errorDescription);
+                if (tries > 1) { return await GetRoundtripAsync(request, tries - 1, errorDescription); }
                 return new GetRoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
             }
             else if (searchRoundTripData.context.status == "complete")
@@ -102,7 +105,7 @@ namespace FlightsDiggingApp.Services
 
                 // tries 5 times
                 int maxTries = 5;
-                var delayMillisecondsDefault = 5000;
+                delayMillisecondsDefault = 5000;
 
                 // Error description in case tries exceed
                 errorDescription = $"ExecuteSearchRoundTripAsync run out of maxTries!";
@@ -120,7 +123,8 @@ namespace FlightsDiggingApp.Services
 
                     if (resultSearchIncomplete == null || resultSearchIncomplete.data == null || resultSearchIncomplete.data.context == null)
                     {
-                        errorDescription = $"ExecuteSearchIncompleteAsync with NULL objects!";
+                        errorDescription = "ExecuteSearchIncompleteAsync with NULL objects!";
+                        _logger.LogInformation("Restarting count, cause of error: {errorDescription}", errorDescription);
                         continue;
                     }
 

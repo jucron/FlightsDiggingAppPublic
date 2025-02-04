@@ -18,6 +18,7 @@ namespace FlightsDiggingApp.Models
         public string departDate { get; set; }
         public string returnDate { get; set; }
         public string sessionId { get; set; }
+        public Filter filter { get; set; }
 
     }
 }

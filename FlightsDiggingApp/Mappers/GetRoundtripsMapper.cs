@@ -30,7 +30,9 @@ namespace FlightsDiggingApp.Mappers
                 endReturnDateString = request.endReturnDateString,
                 departDate = departDate.ToString("yyyy-MM-dd"),
                 returnDate = returnDate.ToString("yyyy-MM-dd"),
-                sessionId = request.sessionId
+                sessionId = request.sessionId,
+                filter = request.filter
+                
             };
         }
 
@@ -57,26 +59,22 @@ namespace FlightsDiggingApp.Mappers
             response.status = OperationStatus.CreateStatusSuccess();
 
             // For each itineraty:
-            int count = 0;
             foreach (var itinerary in result.data.itineraries)
             {
 
                 var flight = new GetRoundtripsResponse.Flight();
-
-                if (count > _maxItineraries)
-                {
-                    break;
-                }
-                // Add count
-                count++;
 
                 // Data to be fetched
                 var price = itinerary.price.raw;
                 List<GetRoundtripsResponse.Company> companies = new List<GetRoundtripsResponse.Company>();
                 int durationHours = 0;
 
+                int countLegs = 0;
                 foreach (var leg in itinerary.legs)
                 {
+                    // Add countlegs
+                    countLegs++;
+
                     // Sum duration of all legs
                     durationHours = +(leg.durationInMinutes / 60);
 
@@ -95,7 +93,8 @@ namespace FlightsDiggingApp.Mappers
                     }
                 }
 
-
+                flight.score = itinerary.score;
+                flight.stops = countLegs - 1;
                 flight.hours = durationHours;
                 flight.rawPrice = price;
                 flight.companies = companies;
