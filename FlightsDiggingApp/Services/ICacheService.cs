@@ -4,8 +4,10 @@ namespace FlightsDiggingApp.Services
 {
     public interface ICacheService
     {
-        public Guid StoreGetRoundtripsResponseDTO(GetRoundtripsResponseDTO getRoundtripsResponseDTO, TimeSpan? expiration = null);
+        public bool StoreGetRoundtripsResponseDTO(RoundtripsResponseDTO getRoundtripsResponseDTO, TimeSpan? expiration = null);
 
-        public GetRoundtripsResponseDTO RetrieveGetRoundtripsResponseDTO(Guid guid);
+        public RoundtripsResponseDTO RetrieveGetRoundtripsResponseDTO(Guid guid);
+
+        public Guid GenerateUUID();
     }
 }

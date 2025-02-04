@@ -23,7 +23,7 @@ namespace Tests
             string jsonPath = "C:\\Users\\997588\\source\\repos\\FlightsDiggingApp\\Tests\\FilterServiceTestData.json"; // Ensure this file exists in your app directory
             string jsonContent = File.ReadAllText(jsonPath);
 
-            GetRoundtripsResponseDTO getRoundtripsResponseDTO = JsonSerializer.Deserialize<GetRoundtripsResponseDTO>(jsonContent);
+            RoundtripsResponseDTO getRoundtripsResponseDTO = JsonSerializer.Deserialize<RoundtripsResponseDTO>(jsonContent);
 
             var expectedMaxDuration = 16;
             var expectedMaxFlights = 15;

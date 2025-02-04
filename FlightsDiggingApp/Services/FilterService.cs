@@ -10,7 +10,7 @@ namespace FlightsDiggingApp.Services
             _logger = logger;
         }
 
-        public GetRoundtripsResponseDTO FilterFlightsFromGetRoundtripsResponseDTO(Filter filter,GetRoundtripsResponseDTO getRoundtripsResponseDTO)
+        public RoundtripsResponseDTO FilterFlightsFromGetRoundtripsResponseDTO(Filter filter,RoundtripsResponseDTO getRoundtripsResponseDTO)
         {
             if (filter == null)
             {
@@ -45,12 +45,12 @@ namespace FlightsDiggingApp.Services
             return getRoundtripsResponseDTO;
         }
 
-        private void SortByScore(GetRoundtripsResponseDTO getRoundtripsResponseDTO)
+        private void SortByScore(RoundtripsResponseDTO getRoundtripsResponseDTO)
         {
             getRoundtripsResponseDTO.data.flights = getRoundtripsResponseDTO.data.flights.OrderByDescending(flight => flight.score).ToList();
         }
 
-        private void FilterByMaxFlights(int maxFlights, GetRoundtripsResponseDTO getRoundtripsResponseDTO)
+        private void FilterByMaxFlights(int maxFlights, RoundtripsResponseDTO getRoundtripsResponseDTO)
         {
             int maxFlightsCap = 100;
             // If maxFlights is 0 or larger than the limit, set it to the limit
@@ -63,27 +63,27 @@ namespace FlightsDiggingApp.Services
             }
         }
 
-        private void FilterByMaxStops(int maxStops, GetRoundtripsResponseDTO getRoundtripsResponseDTO)
+        private void FilterByMaxStops(int maxStops, RoundtripsResponseDTO getRoundtripsResponseDTO)
         {
             getRoundtripsResponseDTO.data.flights = getRoundtripsResponseDTO.data.flights.Where(flight => flight.stops <= maxStops).ToList();
         }
 
-        private void FilterByMaxDuration(int maxDuration, GetRoundtripsResponseDTO getRoundtripsResponseDTO)
+        private void FilterByMaxDuration(int maxDuration, RoundtripsResponseDTO getRoundtripsResponseDTO)
         {
             getRoundtripsResponseDTO.data.flights = getRoundtripsResponseDTO.data.flights.Where(flight => flight.hours <= maxDuration).ToList();
         }
 
-        private void FilterByMinDuration(int minDuration, GetRoundtripsResponseDTO getRoundtripsResponseDTO)
+        private void FilterByMinDuration(int minDuration, RoundtripsResponseDTO getRoundtripsResponseDTO)
         {
             getRoundtripsResponseDTO.data.flights = getRoundtripsResponseDTO.data.flights.Where(flight => flight.hours >= minDuration).ToList();
         }
 
-        private void FilterByMinPrice(double minPrice, GetRoundtripsResponseDTO getRoundtripsResponseDTO)
+        private void FilterByMinPrice(double minPrice, RoundtripsResponseDTO getRoundtripsResponseDTO)
         {
             getRoundtripsResponseDTO.data.flights = getRoundtripsResponseDTO.data.flights.Where(flight => flight.rawPrice >= minPrice).ToList();
         }
 
-        private void FilterByMaxPrice(double maxPrice, GetRoundtripsResponseDTO getRoundtripsResponseDTO)
+        private void FilterByMaxPrice(double maxPrice, RoundtripsResponseDTO getRoundtripsResponseDTO)
         {
            getRoundtripsResponseDTO.data.flights = getRoundtripsResponseDTO.data.flights.Where(flight => flight.rawPrice <= maxPrice).ToList();
         }

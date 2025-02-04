@@ -1,21 +1,21 @@
 ﻿using FlightsDiggingApp.Models;
 using Microsoft.AspNetCore.Http;
-using static FlightsDiggingApp.Models.GetAirportsResponseDTO;
+using static FlightsDiggingApp.Models.AirportsResponseDTO;
 using static FlightsDiggingApp.Models.SearchIncompleteResponse;
 
 namespace FlightsDiggingApp.Mappers
 {
-    public class GetRoundtripsMapper
+    public class RoundtripsMapper
     {
         private static readonly int _maxItineraries = 200;
-        public static GetRoundtripsResponseDTO MapGetRoundtripsResponseToDTO(GetRoundtripsResponse getRoundtripsResponse)
+        public static RoundtripsResponseDTO MapGetRoundtripsResponseToDTO(RoundtripsResponse getRoundtripsResponse)
         {
-            return new GetRoundtripsResponseDTO() { data = getRoundtripsResponse, status = getRoundtripsResponse.status };
+            return new RoundtripsResponseDTO() { data = getRoundtripsResponse, status = getRoundtripsResponse.status };
         }
 
-        public static GetRoundtripsRequest CreateCopyOfGetRoundtripsRequest(GetRoundtripsRequest request, DateTime departDate, DateTime returnDate)
+        public static RoundtripsRequest CreateCopyOfGetRoundtripsRequest(RoundtripsRequest request, DateTime departDate, DateTime returnDate)
         {
-            return new GetRoundtripsRequest
+            return new RoundtripsRequest
             {
                 from = request.from,
                 to = request.to,
@@ -36,14 +36,14 @@ namespace FlightsDiggingApp.Mappers
             };
         }
 
-        internal static GetRoundtripsResponse MapSearchIncompleteResponseToGetRoundtripsResponse(SearchIncompleteResponse result, GetRoundtripsRequest request)
+        internal static RoundtripsResponse MapSearchIncompleteResponseToGetRoundtripsResponse(SearchIncompleteResponse result, RoundtripsRequest request)
         {
             if (result == null || result.data == null || result.data.itineraries.Count == 0)
             {
                 var errorDescription = $"SearchIncompleteResponse has no proper data.";
-                return new GetRoundtripsResponse() { status = { hasError = true, errorDescription = errorDescription } };
+                return new RoundtripsResponse() { status = { hasError = true, errorDescription = errorDescription } };
             }
-            var response = new GetRoundtripsResponse();
+            var response = new RoundtripsResponse();
 
             // Same data as request
             response.from = request.from;
@@ -55,18 +55,18 @@ namespace FlightsDiggingApp.Mappers
             response.children = request.children;
             response.infants = request.infants;
             response.cabinclass = request.cabinclass;
-            response.flights = new List<GetRoundtripsResponse.Flight>();
+            response.flights = new List<RoundtripsResponse.Flight>();
             response.status = OperationStatus.CreateStatusSuccess();
 
             // For each itineraty:
             foreach (var itinerary in result.data.itineraries)
             {
 
-                var flight = new GetRoundtripsResponse.Flight();
+                var flight = new RoundtripsResponse.Flight();
 
                 // Data to be fetched
                 var price = itinerary.price.raw;
-                List<GetRoundtripsResponse.Company> companies = new List<GetRoundtripsResponse.Company>();
+                List<RoundtripsResponse.Company> companies = new List<RoundtripsResponse.Company>();
                 int durationHours = 0;
 
                 int countLegs = 0;
@@ -84,7 +84,7 @@ namespace FlightsDiggingApp.Mappers
                         // Add if there is no company with the same name
                         if (!companies.Any(c => c.name == marketingCarrier.name))
                         {
-                            companies.Add(new GetRoundtripsResponse.Company
+                            companies.Add(new RoundtripsResponse.Company
                             {
                                 name = marketingCarrier.name,
                                 logoUrl = marketingCarrier.logoUrl
@@ -106,7 +106,7 @@ namespace FlightsDiggingApp.Mappers
             return response;
         }
 
-        private static string GenerateLinkByResponse(GetRoundtripsResponse response)
+        private static string GenerateLinkByResponse(RoundtripsResponse response)
         {
             string baseUrl = "https://www.skyscanner.com/transport/flights";
 

@@ -3,6 +3,7 @@ using System.Text;
 using FlightsDiggingApp.Models;
 using System.Text.Json;
 using FlightsDiggingApp.Mappers;
+using Microsoft.Extensions.Logging;
 
 namespace FlightsDiggingApp.Services
 {
@@ -20,14 +21,14 @@ namespace FlightsDiggingApp.Services
             _cacheService = cacheService;
         }
 
-        public GetAirportsResponseDTO GetAirports(string query)
+        public AirportsResponseDTO GetAirports(string query)
         {
             var response = _apiService.GetAirportsAsync(query).Result;
             if (response == null)
             {
-                return new GetAirportsResponseDTO() { status = OperationStatus.CreateStatusFailure("Response from external API is null")};
+                return new AirportsResponseDTO() { status = OperationStatus.CreateStatusFailure("Response from external API is null")};
             }
-            return GetAirportsMapper.MapGetAirportsResponseToDTO(response);
+            return AirportsMapper.MapGetAirportsResponseToDTO(response);
         }
 
         public async Task HandleRoundTripsAsync(WebSocket webSocket)
@@ -44,7 +45,7 @@ namespace FlightsDiggingApp.Services
 
             try
             {
-                var request = JsonSerializer.Deserialize<GetRoundtripsRequest>(receivedMessage, new JsonSerializerOptions
+                var request = JsonSerializer.Deserialize<RoundtripsRequest>(receivedMessage, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
@@ -71,7 +72,7 @@ namespace FlightsDiggingApp.Services
                         {
 
                             // Create a copy of the request for each iteration
-                            var requestCopy = GetRoundtripsMapper.CreateCopyOfGetRoundtripsRequest(request, departDate, returnDate);
+                            var requestCopy = RoundtripsMapper.CreateCopyOfGetRoundtripsRequest(request, departDate, returnDate);
 
                             // Add the request processing as a task to the list
                             tasks.Add(ProcessRoundtripAsyncWithConcurrentControl(requestCopy, webSocket, semaphore));
@@ -107,7 +108,7 @@ namespace FlightsDiggingApp.Services
             }
         }
 
-        private async Task ProcessRoundtripAsyncWithConcurrentControl(GetRoundtripsRequest request, WebSocket webSocket, SemaphoreSlim semaphore)
+        private async Task ProcessRoundtripAsyncWithConcurrentControl(RoundtripsRequest request, WebSocket webSocket, SemaphoreSlim semaphore)
         {
             await semaphore.WaitAsync(); // Wait for an available slot
             try
@@ -120,25 +121,24 @@ namespace FlightsDiggingApp.Services
             }
         }
 
-        private async Task ProcessRoundtripAsync(GetRoundtripsRequest requestCopy, WebSocket webSocket)
+        private async Task ProcessRoundtripAsync(RoundtripsRequest requestCopy, WebSocket webSocket)
         {
             try
             {
                 // Call external API
-                GetRoundtripsResponse roundtripsResponse = await _apiService.GetRoundtripAsync(requestCopy);
+                RoundtripsResponse roundtripsResponse = await _apiService.GetRoundtripAsync(requestCopy);
 
                 // Map the response into DTO object (cleaning)
-                GetRoundtripsResponseDTO getRoundtripsResponseDTO = GetRoundtripsMapper.MapGetRoundtripsResponseToDTO(roundtripsResponse);
+                RoundtripsResponseDTO getRoundtripsResponseDTO = RoundtripsMapper.MapGetRoundtripsResponseToDTO(roundtripsResponse);
+
+                // Generate UUID
+                getRoundtripsResponseDTO.id = _cacheService.GenerateUUID();
 
                 // Persist in cache for future filterings
                 _cacheService.StoreGetRoundtripsResponseDTO(getRoundtripsResponseDTO);
 
                 // Apply filter the DTO before sending it to front
-                GetRoundtripsResponseDTO filteredResponseDTO = _filterService.FilterFlightsFromGetRoundtripsResponseDTO(requestCopy.filter,getRoundtripsResponseDTO);
-
-                // Log some detailed properties
-                _logger.LogInformation($"RoundtripsResponse Status: {filteredResponseDTO.status}");
-                _logger.LogInformation($"Flights Count: {filteredResponseDTO.data.flights?.Count ?? 0}");
+                RoundtripsResponseDTO filteredResponseDTO = _filterService.FilterFlightsFromGetRoundtripsResponseDTO(requestCopy.filter,getRoundtripsResponseDTO);
 
                 // Serialize response
                 var responseJson = JsonSerializer.Serialize(filteredResponseDTO, new JsonSerializerOptions
@@ -172,6 +172,40 @@ namespace FlightsDiggingApp.Services
                                           true,
                                           CancellationToken.None);
             }
+        }
+
+        public CachedRoundTripsResponseDTO getCachedRoundTrips(CachedRoundTripsRequest request)
+        {
+            CachedRoundTripsResponseDTO cachedRoundTripsResponseDTO = new() { responses = [], status = OperationStatus.CreateStatusSuccess() };
+
+            foreach (var id in request.ids)
+            {
+                try
+                {
+                    // Get Response from cache
+                    var response = _cacheService.RetrieveGetRoundtripsResponseDTO(id);
+
+                    if (response.status.hasError) {
+                        _logger.LogError(response.status.errorDescription);
+                        cachedRoundTripsResponseDTO.status = response.status;
+                        break;
+                    }
+
+                    // Filter the response
+                    var filteredResponse = _filterService.FilterFlightsFromGetRoundtripsResponseDTO(request.filter, response);
+
+                    // Add to the list
+                    cachedRoundTripsResponseDTO.responses.Add(filteredResponse);
+
+                } catch (Exception ex)
+                {
+                    var errorMessage = $"Error retrieving cached roundtrip with id: {id}";
+                    _logger.LogError(ex, errorMessage);
+                    cachedRoundTripsResponseDTO.status = OperationStatus.CreateStatusFailure(errorMessage);
+                    break;
+                }
+            }
+            return cachedRoundTripsResponseDTO;
         }
     }
 

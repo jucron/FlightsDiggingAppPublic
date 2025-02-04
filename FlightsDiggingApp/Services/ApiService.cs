@@ -21,7 +21,7 @@ namespace FlightsDiggingApp.Services
 
         // tries is optional parameter
 
-        public async Task<GetAirportsResponse> GetAirportsAsync(string query, int tries = 3)
+        public async Task<AirportsResponse> GetAirportsAsync(string query, int tries = 3)
         {
             _logger.LogInformation($"GetAirportsAsync with query: <{query}>. Tries left: {tries-1}");
             //trim whitespaces of query at ends
@@ -46,14 +46,14 @@ namespace FlightsDiggingApp.Services
                     var jsonString = await response.Content.ReadAsStringAsync();
                     if (jsonString != null)
                     {
-                        GetAirportsResponse finalResponse = JsonSerializer.Deserialize<GetAirportsResponse>(jsonString);
+                        AirportsResponse finalResponse = JsonSerializer.Deserialize<AirportsResponse>(jsonString);
                         if (finalResponse != null)
                         {
                             finalResponse.operationStatus = OperationStatus.CreateStatusSuccess();
                             return finalResponse;
                         }
                     }
-                    return new GetAirportsResponse() { operationStatus = OperationStatus.CreateStatusFailure("Unexpected error -> jsonstring from response API is null") };
+                    return new AirportsResponse() { operationStatus = OperationStatus.CreateStatusFailure("Unexpected error -> jsonstring from response API is null") };
                 }
             }
             catch (Exception ex)
@@ -63,11 +63,11 @@ namespace FlightsDiggingApp.Services
                 {
                     return await GetAirportsAsync(query, tries-1);
                 }
-                return new GetAirportsResponse() { operationStatus = OperationStatus.CreateStatusFailure("Unexpected error -> "+ex.ToString()) };
+                return new AirportsResponse() { operationStatus = OperationStatus.CreateStatusFailure("Unexpected error -> "+ex.ToString()) };
             }
         }
 
-        public async Task<GetRoundtripsResponse> GetRoundtripAsync(GetRoundtripsRequest request, int tries, string errorDescription)
+        public async Task<RoundtripsResponse> GetRoundtripAsync(RoundtripsRequest request, int tries, string errorDescription)
         {
             var delayMillisecondsDefault = 1000;
 
@@ -78,7 +78,7 @@ namespace FlightsDiggingApp.Services
                 errorDescription = $"ExecuteSearchRoundTripAsync with NULL objects, try remaining: {tries}";
                 _logger.LogInformation(errorDescription);
                 if (tries > 1) { return await GetRoundtripAsync(request, tries - 1, errorDescription); }
-                return new GetRoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
+                return new RoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
             }
             var searchRoundTripData = resultSearchRoundTrip.data;
             //_logger.LogInformation($"resultSearchRoundTrip Status: {searchRoundTripData.context.status}");
@@ -88,14 +88,14 @@ namespace FlightsDiggingApp.Services
                 errorDescription = $"ExecuteSearchRoundTripAsync with status FAILURE, try remaining: {tries}";
                 _logger.LogInformation(errorDescription);
                 if (tries > 1) { return await GetRoundtripAsync(request, tries - 1, errorDescription); }
-                return new GetRoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
+                return new RoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
             }
             else if (searchRoundTripData.context.status == "complete")
             {
                 // todo: handle complete responses from ExecuteSearchRoundTripAsync
                 errorDescription = $"ExecuteSearchRoundTripAsync with status COMPLETE. How to handle this?";
                 _logger.LogInformation(errorDescription);
-                return new GetRoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
+                return new RoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
             }
             else if (searchRoundTripData.context.status == "incomplete")
             {
@@ -134,15 +134,15 @@ namespace FlightsDiggingApp.Services
                     if (searchIncompleteData?.context.status == "complete")
                     {
                         // Success
-                        return GetRoundtripsMapper.MapSearchIncompleteResponseToGetRoundtripsResponse(resultSearchIncomplete, request);
+                        return RoundtripsMapper.MapSearchIncompleteResponseToGetRoundtripsResponse(resultSearchIncomplete, request);
                     }
                 }
             }
             _logger.LogInformation(errorDescription);
-            return new GetRoundtripsResponse() { status = new() { hasError = true, errorDescription = errorDescription } };
+            return new RoundtripsResponse() { status = new() { hasError = true, errorDescription = errorDescription } };
         }
 
-        private async Task<SearchIncompleteResponse> ExecuteSearchIncompleteAsync(GetRoundtripsRequest roundTripRequest)
+        private async Task<SearchIncompleteResponse> ExecuteSearchIncompleteAsync(RoundtripsRequest roundTripRequest)
         {
             // Data to be send
             var sessionId = roundTripRequest.sessionId;
@@ -183,7 +183,7 @@ namespace FlightsDiggingApp.Services
             return new SearchIncompleteResponse();
         }
 
-        private async Task<SearchRoundTripResponse> ExecuteSearchRoundTripAsync(GetRoundtripsRequest roundTripRequest)
+        private async Task<SearchRoundTripResponse> ExecuteSearchRoundTripAsync(RoundtripsRequest roundTripRequest)
         {
             // Data to be send
             var from = roundTripRequest.from;

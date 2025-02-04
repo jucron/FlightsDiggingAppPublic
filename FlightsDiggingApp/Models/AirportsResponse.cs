@@ -1,6 +1,6 @@
 ﻿namespace FlightsDiggingApp.Models
 {
-    public class GetAirportsResponse
+    public class AirportsResponse
     {
         public List<Datum> data { get; set; }
         public bool status { get; set; }

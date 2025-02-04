@@ -28,6 +28,7 @@ builder.Services.AddCors(options =>
 });
 
 // Registering Dependency Injection
+builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<IApiService, ApiService>();
 builder.Services.AddSingleton<IFlightsDiggerService, FlightsDiggerService>();
 builder.Services.AddSingleton<IFilterService, FilterService>();

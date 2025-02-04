@@ -1,13 +1,13 @@
 ﻿using FlightsDiggingApp.Models;
-using static FlightsDiggingApp.Models.GetAirportsResponseDTO;
+using static FlightsDiggingApp.Models.AirportsResponseDTO;
 
 namespace FlightsDiggingApp.Mappers
 {
-    public class GetAirportsMapper
+    public class AirportsMapper
     {
-        public static GetAirportsResponseDTO MapGetAirportsResponseToDTO(GetAirportsResponse getAirportsResponse)
+        public static AirportsResponseDTO MapGetAirportsResponseToDTO(AirportsResponse getAirportsResponse)
         {
-            var response = new GetAirportsResponseDTO();
+            var response = new AirportsResponseDTO();
             response.AirportOptions = new List<AirportOption>();
             if (getAirportsResponse.data == null)
             {

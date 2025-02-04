@@ -1,8 +1,8 @@
-﻿using static FlightsDiggingApp.Models.GetAirportsResponse;
+﻿using static FlightsDiggingApp.Models.AirportsResponse;
 
 namespace FlightsDiggingApp.Models
 {
-    public class GetRoundtripsResponse
+    public class RoundtripsResponse
     {
         public string from { set; get; }
         public string to { set; get; }

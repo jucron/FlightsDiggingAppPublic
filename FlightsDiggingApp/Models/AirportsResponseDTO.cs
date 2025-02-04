@@ -1,8 +1,8 @@
-﻿using static FlightsDiggingApp.Models.GetAirportsResponse;
+﻿using static FlightsDiggingApp.Models.AirportsResponse;
 
 namespace FlightsDiggingApp.Models
 {
-    public class GetAirportsResponseDTO
+    public class AirportsResponseDTO
     {
         public List<AirportOption> AirportOptions { get; set; }
         public OperationStatus status { get; set; }

@@ -5,7 +5,8 @@ namespace FlightsDiggingApp.Services
 {
     public interface IFlightsDiggerService
     {
-        public GetAirportsResponseDTO GetAirports(string query);   
+        public AirportsResponseDTO GetAirports(string query);
+        CachedRoundTripsResponseDTO getCachedRoundTrips(CachedRoundTripsRequest request);
         public Task HandleRoundTripsAsync(WebSocket webSocket);
     }
 }

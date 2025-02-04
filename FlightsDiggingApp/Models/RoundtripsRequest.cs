@@ -1,14 +1,14 @@
-﻿using static FlightsDiggingApp.Models.GetAirportsResponse;
+﻿using static FlightsDiggingApp.Models.AirportsResponse;
 
 namespace FlightsDiggingApp.Models
 {
-    public class GetRoundtripsRequest
+    public class RoundtripsRequest
     {
         public string from { get; set; }
         public string to { get; set; }
         public string currency { get; set; }
         public int adults { get; set; }
-        public List<GetRoundtripsResponse.Child> children { get; set; }
+        public List<RoundtripsResponse.Child> children { get; set; }
         public int infants { get; set; }
         public string cabinclass { get; set; }
         public string initDepartDateString { get; set; }

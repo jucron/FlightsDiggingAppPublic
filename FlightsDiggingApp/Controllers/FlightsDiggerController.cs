@@ -25,10 +25,10 @@ namespace FlightsDiggingApp.Controllers
             _flightsDiggerService = flightsDiggerService;
         }
 
-        [HttpGet("getroundtrips")]
-        public async Task GetRoundTrips()
+        [HttpGet("roundtrips")]
+        public async Task RoundTrips()
         {
-            _logger.LogInformation(">>>>>>>>>>Starting: GetRoundTrips");
+            _logger.LogInformation(">>>>>>>>>>Starting: RoundTrips");
             if (HttpContext.WebSockets.IsWebSocketRequest)
             {
                 using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
@@ -43,9 +43,15 @@ namespace FlightsDiggingApp.Controllers
         }
 
         [HttpGet("airports")]
-        public GetAirportsResponseDTO GetAirports([FromQuery] string query)
+        public AirportsResponseDTO GetAirports([FromQuery] string query)
         {
             return _flightsDiggerService.GetAirports(query);
+        }
+
+        [HttpGet("roundtripsfromcache")]
+        public CachedRoundTripsResponseDTO CachedRoundTrips([FromQuery] CachedRoundTripsRequest request)
+        {
+            return _flightsDiggerService.getCachedRoundTrips(request);
         }
     }
 }
