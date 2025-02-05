@@ -1,4 +1,5 @@
-﻿using FlightsDiggingApp.Models;
+﻿using System.Text.Json;
+using FlightsDiggingApp.Models;
 using Microsoft.AspNetCore.Http;
 using static FlightsDiggingApp.Models.AirportsResponseDTO;
 using static FlightsDiggingApp.Models.SearchIncompleteResponse;
@@ -33,6 +34,17 @@ namespace FlightsDiggingApp.Mappers
                 sessionId = request.sessionId,
                 filter = request.filter
                 
+            };
+        }
+
+        public static RoundtripsResponseDTO CreateCopyOfGetRoundtripsResponseDTO(RoundtripsResponseDTO responseDTO)
+        {
+            // Deep copy using JSON serialization
+            var responseCopy = JsonSerializer.Deserialize<RoundtripsResponseDTO>(JsonSerializer.Serialize(responseDTO));
+
+            return responseCopy ?? new RoundtripsResponseDTO
+            {
+                status = OperationStatus.CreateStatusFailure("Deep copy resulted in null in RoundtripsMapper.CreateCopyOfGetRoundtripsResponseDTO()")
             };
         }
 

@@ -1,4 +1,5 @@
-﻿using FlightsDiggingApp.Models;
+﻿using FlightsDiggingApp.Mappers;
+using FlightsDiggingApp.Models;
 
 namespace FlightsDiggingApp.Services
 {
@@ -12,37 +13,54 @@ namespace FlightsDiggingApp.Services
 
         public RoundtripsResponseDTO FilterFlightsFromGetRoundtripsResponseDTO(Filter filter,RoundtripsResponseDTO getRoundtripsResponseDTO)
         {
+            var filteredResponse = RoundtripsMapper.CreateCopyOfGetRoundtripsResponseDTO(getRoundtripsResponseDTO);
+
             if (filter == null)
             {
-                return getRoundtripsResponseDTO;
+                return new RoundtripsResponseDTO { status = OperationStatus.CreateStatusFailure("Could not apply filter, because Filter object is null!")};
             } 
             if (filter.maxPrice != 0)
             {
-                FilterByMaxPrice(filter.maxPrice, getRoundtripsResponseDTO);
+                FilterByMaxPrice(filter.maxPrice, filteredResponse);
             }
             if (filter.minPrice != 0)
             {
-                FilterByMinPrice(filter.minPrice, getRoundtripsResponseDTO);
+                FilterByMinPrice(filter.minPrice, filteredResponse);
             }
             if (filter.minDuration != 0)
             {
-                FilterByMinDuration(filter.minDuration, getRoundtripsResponseDTO);
+                FilterByMinDuration(filter.minDuration, filteredResponse);
             }
             if (filter.maxDuration != 0)
             {
-                FilterByMaxDuration(filter.maxDuration, getRoundtripsResponseDTO);
+                FilterByMaxDuration(filter.maxDuration, filteredResponse);
             }
             if (filter.maxStops != 0)
             {
-                FilterByMaxStops(filter.maxStops, getRoundtripsResponseDTO);
+                FilterByMaxStops(filter.maxStops, filteredResponse);
             }
 
-            SortByScore(getRoundtripsResponseDTO);
+            SortByScore(filteredResponse);
 
-            FilterByMaxFlights(filter.maxFlights, getRoundtripsResponseDTO);
+            FilterByMaxFlights(filter.maxFlights, filteredResponse);
+
+            ApplyMetrics(filteredResponse);
 
             // Returns filtered content
-            return getRoundtripsResponseDTO;
+            return filteredResponse;
+        }
+
+        private void ApplyMetrics(RoundtripsResponseDTO filteredResponse)
+        {
+            filteredResponse.metrics = new RoundTripsMetrics() { 
+                totalFlights = filteredResponse.data.flights.Count,
+                maxHours = filteredResponse.data.flights.Max(flight => flight.hours),
+                minHours = filteredResponse.data.flights.Min(flight => flight.hours),
+                maxPrice = filteredResponse.data.flights.Max(flight => flight.rawPrice),
+                minPrice = filteredResponse.data.flights.Min(flight => flight.rawPrice),
+                maxScore = filteredResponse.data.flights.Max(flight => flight.score),
+                minScore = filteredResponse.data.flights.Min(flight => flight.score)
+            };
         }
 
         private void SortByScore(RoundtripsResponseDTO getRoundtripsResponseDTO)

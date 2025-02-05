@@ -176,6 +176,7 @@ namespace FlightsDiggingApp.Services
 
         public CachedRoundTripsResponseDTO getCachedRoundTrips(CachedRoundTripsRequest request)
         {
+            _logger.LogInformation($"Received request for CachedRoundTrips in request: {request}");
             CachedRoundTripsResponseDTO cachedRoundTripsResponseDTO = new() { responses = [], status = OperationStatus.CreateStatusSuccess() };
 
             foreach (var id in request.ids)
@@ -184,6 +185,7 @@ namespace FlightsDiggingApp.Services
                 {
                     // Get Response from cache
                     var response = _cacheService.RetrieveGetRoundtripsResponseDTO(id);
+                    _logger.LogInformation($"Retrieved cached roundtrip with id: {id} and with flights size: {response.data.flights.Count}");
 
                     if (response.status.hasError) {
                         _logger.LogError(response.status.errorDescription);

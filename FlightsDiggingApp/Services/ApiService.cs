@@ -75,7 +75,7 @@ namespace FlightsDiggingApp.Services
             
             if (resultSearchRoundTrip == null || resultSearchRoundTrip.data == null || resultSearchRoundTrip.data.context == null)
             {
-                errorDescription = $"ExecuteSearchRoundTripAsync with NULL objects, try remaining: {tries}";
+                errorDescription = $"ExecuteSearchRoundTripAsync with NULL objects, tries remaining: {tries-1}";
                 _logger.LogInformation(errorDescription);
                 if (tries > 1) { return await GetRoundtripAsync(request, tries - 1, errorDescription); }
                 return new RoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
@@ -85,7 +85,7 @@ namespace FlightsDiggingApp.Services
 
             if (searchRoundTripData.context.status == "failure")
             {
-                errorDescription = $"ExecuteSearchRoundTripAsync with status FAILURE, try remaining: {tries}";
+                errorDescription = $"ExecuteSearchRoundTripAsync with status FAILURE, tries remaining: {tries-1}";
                 _logger.LogInformation(errorDescription);
                 if (tries > 1) { return await GetRoundtripAsync(request, tries - 1, errorDescription); }
                 return new RoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
@@ -93,7 +93,7 @@ namespace FlightsDiggingApp.Services
             else if (searchRoundTripData.context.status == "complete")
             {
                 // todo: handle complete responses from ExecuteSearchRoundTripAsync
-                errorDescription = $"ExecuteSearchRoundTripAsync with status COMPLETE. How to handle this?";
+                errorDescription = $"ExecuteSearchRoundTripAsync with status COMPLETE. Not implemented yet.";
                 _logger.LogInformation(errorDescription);
                 return new RoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
             }
@@ -185,7 +185,7 @@ namespace FlightsDiggingApp.Services
 
         private async Task<SearchRoundTripResponse> ExecuteSearchRoundTripAsync(RoundtripsRequest roundTripRequest)
         {
-            // Data to be send
+            // Data to be sent
             var from = roundTripRequest.from;
             var to = roundTripRequest.to;
             var departDate = roundTripRequest.departDate;
@@ -196,8 +196,6 @@ namespace FlightsDiggingApp.Services
             var infants = roundTripRequest.infants;
             var children = roundTripRequest.children.Count;
 
-            //https://sky-scanner3.p.rapidapi.com/flights/search-roundtrip?fromEntityId=GIG&toEntityId=OPO&departDate=2025-04-16&returnDate=2025-04-18&currency=BRL&adults=2&infants=1&cabinClass=economy&children=2&sort=cheapest_first
-            
             var client = new HttpClient();
             var uri = $"https://sky-scanner3.p.rapidapi.com/flights/search-roundtrip?fromEntityId={from}&toEntityId={to}&departDate={departDate}&returnDate={returnDate}&currency={currency}&adults={adults}&cabinClass={cabinclass}&infants={infants}&children={children}&sort=cheapest_first";
             _logger.LogInformation($"ExecuteSearchRoundTripAsync with URI: {uri}");
