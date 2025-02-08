@@ -7,6 +7,7 @@ namespace FlightsDiggingApp.Services
     public class CacheService : ICacheService
     {
         private readonly IMemoryCache _cache;
+        private readonly string TOKEN_KEY = "token-key";
 
         public CacheService(IMemoryCache cache)
         {
@@ -16,6 +17,12 @@ namespace FlightsDiggingApp.Services
         public Guid GenerateUUID()
         {
             return Guid.NewGuid();
+        }
+
+        public string GetToken()
+        {
+            _cache.TryGetValue<string>(TOKEN_KEY, out var token);
+            return token != null ? token : "";
         }
 
         public RoundtripsResponseDTO RetrieveGetRoundtripsResponseDTO(Guid uuid)
@@ -28,6 +35,15 @@ namespace FlightsDiggingApp.Services
             return (response != null) ? response : errorResponse;
         }
 
+        public void SetToken(string token)
+        {
+            var cacheEntryOptions = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
+            };
+
+            _cache.Set(TOKEN_KEY, token, cacheEntryOptions);
+        }
 
         public bool StoreGetRoundtripsResponseDTO(RoundtripsResponseDTO getRoundtripsResponseDTO, TimeSpan? expiration = null)
         {

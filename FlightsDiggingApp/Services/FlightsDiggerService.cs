@@ -28,7 +28,7 @@ namespace FlightsDiggingApp.Services
             {
                 return new AirportsResponseDTO() { status = OperationStatus.CreateStatusFailure("Response from external API is null")};
             }
-            return AirportsMapper.MapGetAirportsResponseToDTO(response);
+            return response;
         }
 
         public async Task HandleRoundTripsAsync(WebSocket webSocket)

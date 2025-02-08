@@ -9,19 +9,19 @@ using Microsoft.Extensions.Logging;
 
 namespace FlightsDiggingApp.Services
 {
-    public class ApiService : IApiService
+    public class RapidApiService : IApiService
     {
         private readonly string _rapidapi_key = "441f8260camsh5ee529fad4a52c9p1cadf2jsnd01e83b82152";
-        private readonly ILogger<ApiService> _logger;
+        private readonly ILogger<RapidApiService> _logger;
 
-        public ApiService(ILogger<ApiService> logger)
+        public RapidApiService(ILogger<RapidApiService> logger)
         {
             _logger = logger;
         }
 
         // tries is optional parameter
 
-        public async Task<AirportsResponse> GetAirportsAsync(string query, int tries = 3)
+        public async Task<AirportsResponseDTO> GetAirportsAsync(string query, int tries = 3)
         {
             _logger.LogInformation($"GetAirportsAsync with query: <{query}>. Tries left: {tries-1}");
             //trim whitespaces of query at ends
@@ -50,10 +50,10 @@ namespace FlightsDiggingApp.Services
                         if (finalResponse != null)
                         {
                             finalResponse.operationStatus = OperationStatus.CreateStatusSuccess();
-                            return finalResponse;
+                            return AirportsMapper.MapGetAirportsResponseToDTO(finalResponse);
                         }
                     }
-                    return new AirportsResponse() { operationStatus = OperationStatus.CreateStatusFailure("Unexpected error -> jsonstring from response API is null") };
+                    return new AirportsResponseDTO() { status = OperationStatus.CreateStatusFailure("Unexpected error -> jsonstring from response API is null") };
                 }
             }
             catch (Exception ex)
@@ -63,7 +63,7 @@ namespace FlightsDiggingApp.Services
                 {
                     return await GetAirportsAsync(query, tries-1);
                 }
-                return new AirportsResponse() { operationStatus = OperationStatus.CreateStatusFailure("Unexpected error -> "+ex.ToString()) };
+                return new AirportsResponseDTO() { status = OperationStatus.CreateStatusFailure("Unexpected error -> "+ex.ToString()) };
             }
         }
 

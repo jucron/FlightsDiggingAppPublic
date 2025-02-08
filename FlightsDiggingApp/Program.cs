@@ -29,10 +29,12 @@ builder.Services.AddCors(options =>
 
 // Registering Dependency Injection
 builder.Services.AddMemoryCache();
-builder.Services.AddSingleton<IApiService, ApiService>();
+builder.Services.AddSingleton<ICacheService, CacheService>();
+builder.Services.AddSingleton<IAuthService, AmadeusAuthService>();
+builder.Services.AddSingleton<IApiService, AmadeusApiService>();
 builder.Services.AddSingleton<IFlightsDiggerService, FlightsDiggerService>();
 builder.Services.AddSingleton<IFilterService, FilterService>();
-builder.Services.AddSingleton<ICacheService, CacheService>();
+
 
 // Build App
 var app = builder.Build();

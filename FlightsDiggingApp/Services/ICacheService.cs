@@ -9,5 +9,8 @@ namespace FlightsDiggingApp.Services
         public RoundtripsResponseDTO RetrieveGetRoundtripsResponseDTO(Guid guid);
 
         public Guid GenerateUUID();
+
+        public string GetToken();
+        public void SetToken(string token);
     }
 }

@@ -17,22 +17,24 @@ namespace FlightsDiggingApp.Controllers
     public class FlightsDiggerController : ControllerBase
     {
         private readonly ILogger<FlightsDiggerController> _logger;
-        private readonly IFlightsDiggerService _flightsDiggerService;
+        private readonly RapidApiService _apiService;
+        private readonly RoundTripsService _roundTripsService;
 
-        public FlightsDiggerController(ILogger<FlightsDiggerController> logger, IFlightsDiggerService flightsDiggerService)
+        public FlightsDiggerController(ILogger<FlightsDiggerController> logger)
         {
             _logger = logger;
-            _flightsDiggerService = flightsDiggerService;
+            _apiService = new ApiService(logger);
+            _roundTripsService = new RoundTripsService(logger, _apiService);
         }
 
-        [HttpGet("roundtrips")]
-        public async Task RoundTrips()
+        [HttpGet("getroundtrips")]
+        public async Task GetRoundTrips()
         {
-            _logger.LogInformation(">>>>>>>>>>Starting: RoundTrips");
+            _logger.LogInformation(">>>>>>>>>>Starting: GetRoundTrips");
             if (HttpContext.WebSockets.IsWebSocketRequest)
             {
                 using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-                await _flightsDiggerService.HandleRoundTripsAsync(webSocket);
+                await _roundTripsService.HandleRoundTripsAsync(webSocket);
             }
             else
             {
@@ -43,15 +45,9 @@ namespace FlightsDiggingApp.Controllers
         }
 
         [HttpGet("airports")]
-        public AirportsResponseDTO GetAirports([FromQuery] string query)
+        public GetAirportsResponseDTO GetAirports([FromQuery] string query)
         {
-            return _flightsDiggerService.GetAirports(query);
-        }
-
-        [HttpGet("roundtripsfromcache")]
-        public CachedRoundTripsResponseDTO CachedRoundTrips([FromQuery] CachedRoundTripsRequest request)
-        {
-            return _flightsDiggerService.getCachedRoundTrips(request);
+            return GetAirportsMapper.MapGetAirportsResponseToDTO(_apiService.GetAirportsAsync(query).Result);
         }
     }
 }
