@@ -1,3 +1,4 @@
+using FlightsDiggingApp.Properties;
 using FlightsDiggingApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,6 +27,11 @@ builder.Services.AddCors(options =>
               .AllowCredentials();
     });
 });
+
+// Populating Properties
+builder.Configuration.AddJsonFile("amadeus_api_properties_values.json", optional: false, reloadOnChange: true);
+builder.Services.Configure<AmadeusApiProperties>(builder.Configuration.GetSection("AmadeusApiValues"));
+
 
 // Registering Dependency Injection
 builder.Services.AddMemoryCache();

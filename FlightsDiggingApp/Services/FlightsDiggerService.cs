@@ -13,12 +13,19 @@ namespace FlightsDiggingApp.Services
         private readonly IApiService _apiService;
         private readonly IFilterService _filterService;
         private readonly ICacheService _cacheService;
-        public FlightsDiggerService(ILogger<FlightsDiggerService> logger, IApiService apiService, IFilterService filterService, ICacheService cacheService)
+        private readonly IAuthService _authService;
+        public FlightsDiggerService(ILogger<FlightsDiggerService> logger, IApiService apiService, IFilterService filterService, ICacheService cacheService, IAuthService authService)
         {
             _logger = logger;
             _apiService = apiService;
             _filterService = filterService;
             _cacheService = cacheService;
+            _authService = authService;
+        }
+
+        public string GetAuthToken()
+        {
+            return _authService.GetToken();
         }
 
         public AirportsResponseDTO GetAirports(string query)

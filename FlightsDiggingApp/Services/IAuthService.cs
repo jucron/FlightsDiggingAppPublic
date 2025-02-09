@@ -2,6 +2,6 @@
 {
     public interface IAuthService
     {
-        public string getToken();
+        public string GetToken();
     }
 }

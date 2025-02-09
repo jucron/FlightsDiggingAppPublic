@@ -17,14 +17,12 @@ namespace FlightsDiggingApp.Controllers
     public class FlightsDiggerController : ControllerBase
     {
         private readonly ILogger<FlightsDiggerController> _logger;
-        private readonly RapidApiService _apiService;
-        private readonly RoundTripsService _roundTripsService;
+        IFlightsDiggerService _flightsDiggerService;
 
-        public FlightsDiggerController(ILogger<FlightsDiggerController> logger)
+        public FlightsDiggerController(ILogger<FlightsDiggerController> logger, IFlightsDiggerService flightsDiggerService)
         {
             _logger = logger;
-            _apiService = new ApiService(logger);
-            _roundTripsService = new RoundTripsService(logger, _apiService);
+            _flightsDiggerService = flightsDiggerService;
         }
 
         [HttpGet("getroundtrips")]
@@ -34,7 +32,7 @@ namespace FlightsDiggingApp.Controllers
             if (HttpContext.WebSockets.IsWebSocketRequest)
             {
                 using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-                await _roundTripsService.HandleRoundTripsAsync(webSocket);
+                await _flightsDiggerService.HandleRoundTripsAsync(webSocket);
             }
             else
             {
@@ -45,9 +43,15 @@ namespace FlightsDiggingApp.Controllers
         }
 
         [HttpGet("airports")]
-        public GetAirportsResponseDTO GetAirports([FromQuery] string query)
+        public AirportsResponseDTO GetAirports([FromQuery] string query)
         {
-            return GetAirportsMapper.MapGetAirportsResponseToDTO(_apiService.GetAirportsAsync(query).Result);
+            return _flightsDiggerService.GetAirports(query);
+        }
+
+        [HttpGet("authtoken")]
+        public string GetAuthToken()
+        {
+            return _flightsDiggerService.GetAuthToken();
         }
     }
 }

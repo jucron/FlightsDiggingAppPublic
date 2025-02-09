@@ -1,7 +1,10 @@
 ﻿
+using FlightsDiggingApp.Helpers;
 using FlightsDiggingApp.Mappers;
 using FlightsDiggingApp.Models;
 using FlightsDiggingApp.Models.Amadeus;
+using FlightsDiggingApp.Properties;
+using Microsoft.Extensions.Options;
 using System.Text;
 using System.Text.Json;
 
@@ -11,22 +14,26 @@ namespace FlightsDiggingApp.Services
     {
         private readonly ICacheService _cacheService;
         private readonly ILogger<AmadeusAuthService> _logger;
+        AmadeusApiProperties _amadeusApiProperties;
 
-        public AmadeusAuthService(ICacheService cacheService, ILogger<AmadeusAuthService> logger)
+        public AmadeusAuthService(ICacheService cacheService, ILogger<AmadeusAuthService> logger, IOptions<AmadeusApiProperties> amadeusApiProperties)
         {
             _cacheService = cacheService;
             _logger = logger;
+            _amadeusApiProperties = amadeusApiProperties.Value;
         }
 
-        public string getToken()
+        public string GetToken()
         {
             // Get first from cache
             var token = _cacheService.GetToken();
             if (token != "")
             {
+                _logger.LogInformation("Token found in cache, returning it");
                 return token;
             }
 
+            _logger.LogInformation("Token NOT found in cache, calling api to fetch a new one");
             // If not in cache, we need to fetch from server
             token = GetAsyncToken().Result;
             _cacheService.SetToken(token);
@@ -35,55 +42,30 @@ namespace FlightsDiggingApp.Services
 
         private async Task<string> GetAsyncToken()
         {
+            _logger.LogInformation($"GetAsyncToken triggered");
 
-            var authRequest = new AuthRequest
+            var headers = new Dictionary<string, string>
             {
-                grant_type = "client_credentials",
-                client_id = "UEBTNCyAuKZ6FDThuAhKUqIYEjzQDIkq",
-                client_secret = "wkJB2poI89bHXKvn"
+                { "Content-Type", "application/x-www-form-urlencoded" }
             };
 
-            // Convert AuthRequest object to JSON
-            var jsonRequest = JsonSerializer.Serialize(authRequest);
-            var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
-
-            _logger.LogInformation($"GetAsyncToken");
-            var client = new HttpClient();
-            var request = new HttpRequestMessage
+            var parameters = new Dictionary<string, string>
             {
-                Method = HttpMethod.Post,
-                RequestUri = new Uri($"https://test.api.amadeus.com/v1/security/oauth2/token"),
-                Headers =
-                {
-                    { "Content-Type", "application/x-www-form-urlencoded" },
-
-                },
-                Content = content
+                { "grant_type", _amadeusApiProperties.grant_type },
+                { "client_id", _amadeusApiProperties.client_id },
+                { "client_secret", _amadeusApiProperties.client_secret }
             };
 
+            var baseUrl = "https://test.api.amadeus.com/v1/security/oauth2/token";
 
-            try
+            var apiResponse = await ApiCallUtility.PostAsyncFormUrlEncodedContent<AuthResponse>(baseUrl, parameters, headers);
+
+            if (apiResponse.status.hasError || apiResponse.data == null)
             {
-                using var response = await client.SendAsync(request);
-                response.EnsureSuccessStatusCode();
-                var jsonString = await response.Content.ReadAsStringAsync();
-                if (jsonString != null)
-                {
-                    AuthResponse finalResponse = JsonSerializer.Deserialize<AuthResponse>(jsonString);
-                    if (finalResponse != null)
-                    {
-                        finalResponse.status = OperationStatus.CreateStatusSuccess();
-                        return finalResponse.access_token;
-                    }
-                }
-                _logger.LogInformation("Unexpected error -> jsonstring from response API is null");
+                _logger.LogError("Error in GetAsyncToken: " + apiResponse.status.errorDescription);
                 return "";
             }
-            catch (Exception ex)
-            {
-                _logger.LogInformation("Error in GetAsyncToken " + ex.ToString());
-                return "";
-            }
+            return apiResponse.data.access_token;
         }
     }
 }
