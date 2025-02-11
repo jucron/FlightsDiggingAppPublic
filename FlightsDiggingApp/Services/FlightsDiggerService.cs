@@ -4,6 +4,7 @@ using FlightsDiggingApp.Models;
 using System.Text.Json;
 using FlightsDiggingApp.Mappers;
 using Microsoft.Extensions.Logging;
+using FlightsDiggingApp.Models.RapidApi;
 
 namespace FlightsDiggingApp.Services
 {
@@ -35,7 +36,7 @@ namespace FlightsDiggingApp.Services
             {
                 return new AirportsResponseDTO() { status = OperationStatus.CreateStatusFailure("Response from external API is null")};
             }
-            return response;
+            return AirportsMapper.MapAirportsResponseToDTO(response);
         }
 
         public async Task HandleRoundTripsAsync(WebSocket webSocket)
@@ -132,8 +133,8 @@ namespace FlightsDiggingApp.Services
         {
             try
             {
-                // Call external API
-                RoundtripsResponse roundtripsResponse = await _apiService.GetRoundtripAsync(requestCopy);
+                // Call external API TODO: fix this! will break. Should expect IApiResponse
+                RapidApiRoundtripsResponse roundtripsResponse = (RapidApiRoundtripsResponse)await _apiService.GetRoundtripAsync(requestCopy);
 
                 // Map the response into DTO object (cleaning)
                 RoundtripsResponseDTO getRoundtripsResponseDTO = RoundtripsMapper.MapGetRoundtripsResponseToDTO(roundtripsResponse);

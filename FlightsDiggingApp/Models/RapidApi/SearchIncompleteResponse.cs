@@ -1,4 +1,4 @@
-namespace FlightsDiggingApp.Models
+namespace FlightsDiggingApp.Models.RapidApi
 {
     public class SearchIncompleteResponse
     {

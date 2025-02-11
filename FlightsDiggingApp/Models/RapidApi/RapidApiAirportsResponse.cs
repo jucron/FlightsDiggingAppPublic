@@ -1,6 +1,6 @@
-﻿namespace FlightsDiggingApp.Models
+﻿namespace FlightsDiggingApp.Models.RapidApi
 {
-    public class AirportsResponse
+    public class RapidApiAirportsResponse
     {
         public List<Datum> data { get; set; }
         public bool status { get; set; }

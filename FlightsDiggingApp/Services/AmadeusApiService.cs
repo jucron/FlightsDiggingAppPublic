@@ -1,6 +1,10 @@
 ﻿using FlightsDiggingApp.Mappers;
 using System.Text.Json;
 using FlightsDiggingApp.Models;
+using FlightsDiggingApp.Models.RapidApi;
+using FlightsDiggingApp.Properties;
+using FlightsDiggingApp.Helpers;
+using FlightsDiggingApp.Models.Amadeus;
 
 namespace FlightsDiggingApp.Services
 {
@@ -14,53 +18,34 @@ namespace FlightsDiggingApp.Services
             _logger = logger;
         }
 
-        public async Task<AirportsResponseDTO> GetAirportsAsync(string query, int tries = 3)
+        public async Task<IApiServiceResponse> GetAirportsAsync(string query, int tries = 3)
         {
             _logger.LogInformation($"GetAirportsAsync with query: <{query}>. Tries left: {tries - 1}");
-            //trim whitespaces of query at ends
-            query = query.Trim();
-            query = query.Replace(" ", "%20");
-            var client = new HttpClient();
-            var request = new HttpRequestMessage
+
+            var headers = new Dictionary<string, string>
             {
-                Method = HttpMethod.Get,
-                RequestUri = new Uri($"https://test.api.amadeus.com/v1/reference-data/locations?keyword={query}&subType=CITY,AIRPORT"),
-                Headers =
-                {
-                    { "Content-Type", "application/x-www-form-urlencoded" },
-                    
-                },
+                { "Content-Type", "application/x-www-form-urlencoded" }
             };
-            try
+
+            var parameters = new Dictionary<string, string>
             {
-                using (var response = await client.SendAsync(request))
-                {
-                    response.EnsureSuccessStatusCode();
-                    var jsonString = await response.Content.ReadAsStringAsync();
-                    if (jsonString != null)
-                    {
-                        AirportsResponse finalResponse = JsonSerializer.Deserialize<AirportsResponse>(jsonString);
-                        if (finalResponse != null)
-                        {
-                            finalResponse.operationStatus = OperationStatus.CreateStatusSuccess();
-                            return AirportsMapper.MapGetAirportsResponseToDTO(finalResponse);
-                        }
-                    }
-                    return new AirportsResponseDTO() { status = OperationStatus.CreateStatusFailure("Unexpected error -> jsonstring from response API is null") };
-                }
-            }
-            catch (Exception ex)
+                { "keyword", query },
+                { "subType", "CITY,AIRPORT" }
+            };
+
+            var baseUrl = "https://test.api.amadeus.com/v1/reference-data/locations";
+
+            var apiResponse = await ApiCallUtility.GetAsync<AmadeusAirportResponse>(baseUrl,parameters,headers);
+
+            if (apiResponse.status.hasError || apiResponse.data == null)
             {
-                _logger.LogInformation("Error in ExecuteSearchIncompleteAsync " + ex.ToString());
-                if (tries > 1)
-                {
-                    return await GetAirportsAsync(query, tries - 1);
-                }
-                return new AirportsResponseDTO() { status = OperationStatus.CreateStatusFailure("Unexpected error -> " + ex.ToString()) };
+                _logger.LogError("Error in GetAirportsAsync: " + apiResponse.status.errorDescription);
+                return new AmadeusAirportResponse() { Status = apiResponse.status};
             }
+            return apiResponse.data;
         }
 
-        public Task<RoundtripsResponse> GetRoundtripAsync(RoundtripsRequest request, int tries = 3, string errorDescription = "Unexpected error/status")
+        public Task<IApiServiceResponse> GetRoundtripAsync(RoundtripsRequest request, int tries = 3, string errorDescription = "Unexpected error/status")
         {
             throw new NotImplementedException();
         }

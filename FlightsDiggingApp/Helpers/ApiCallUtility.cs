@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using FlightsDiggingApp.Models;
 using FlightsDiggingApp.Models.Amadeus;
@@ -10,21 +11,21 @@ namespace FlightsDiggingApp.Helpers
     {
         private static readonly HttpClient _httpClient = new HttpClient();
 
-        public static async Task<ApiCallResponse<TResponse>> GetAsync<TResponse>(string url, Dictionary<string, string>? parameters = null, Dictionary<string, string>? headers = null)
+        public static async Task<ApiCallResponse<TResponse>> GetAsync<TResponse>(
+            string url, 
+            Dictionary<string, string>? parameters = null,
+            Dictionary<string, string>? headers = null,
+            string? bearerToken = null)
         {
-
-            // Add query parameters to the URL
-            if (parameters != null && parameters.Count > 0)
-            {
-                var queryString = string.Join("&", parameters.Select(p => $"{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}"));
-                url = $"{url}?{queryString}";
-            }
+            url = AddParametersToUrl(url, parameters);
 
             var request = new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(url),
             };
+
+            AddBearerTokenIfProvided(request,bearerToken);
 
             AddHeadersToRequest(request, headers);
 
@@ -57,7 +58,7 @@ namespace FlightsDiggingApp.Helpers
             }
         }
 
-        public static async Task<ApiCallResponse<TResponse>> PostAsync<TResponse>(string url, Object payload, Dictionary<string, string>? headers = null)
+        public static async Task<ApiCallResponse<TResponse>> PostAsync<TResponse>(string url, Object payload, Dictionary<string, string>? headers = null, string? bearerToken = null)
         {
 
             // Convert AuthRequest object to JSON
@@ -70,6 +71,8 @@ namespace FlightsDiggingApp.Helpers
                 RequestUri = new Uri(url),
                 Content = content
             };
+
+            AddBearerTokenIfProvided(request, bearerToken);
 
             AddHeadersToRequest(request, headers);
 
@@ -92,8 +95,8 @@ namespace FlightsDiggingApp.Helpers
             catch (Exception ex)
             {
                 string errorMessage = $"Error: {ex.ToString()} \nrequest: {request.ToString()}\ncontent: {content.ReadAsStringAsync()}";
-                errorMessage = (ex is HttpRequestException) ? "HTTP "+errorMessage : "Unexpected "+errorMessage;
-                
+                errorMessage = (ex is HttpRequestException) ? "HTTP " + errorMessage : "Unexpected " + errorMessage;
+
                 return new ApiCallResponse<TResponse>
                 {
                     status = OperationStatus.CreateStatusFailure(errorMessage),
@@ -101,7 +104,6 @@ namespace FlightsDiggingApp.Helpers
                 };
             }
         }
-
         public static async Task<ApiCallResponse<TResponse>> PostAsyncFormUrlEncodedContent<TResponse>(string url, Dictionary<string, string> parameters, Dictionary<string, string>? headers = null)
         {
             var content = new FormUrlEncodedContent(parameters);
@@ -143,8 +145,6 @@ namespace FlightsDiggingApp.Helpers
                 };
             }
         }
-
-
         private static void AddHeadersToRequest(HttpRequestMessage request, Dictionary<string, string>? headers)
         {
             if (headers != null)
@@ -154,6 +154,22 @@ namespace FlightsDiggingApp.Helpers
                     request.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
             }
+        }
+        private static void AddBearerTokenIfProvided(HttpRequestMessage request, string? bearerToken)
+        {
+            if (!string.IsNullOrWhiteSpace(bearerToken))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+            }
+        }
+        private static string AddParametersToUrl(string url, Dictionary<string, string>? parameters)
+        {
+            if (parameters != null && parameters.Count > 0)
+            {
+                var queryString = string.Join("&", parameters.Select(p => $"{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}"));
+                url = $"{url}?{queryString}";
+            }
+            return url;
         }
     }
 }

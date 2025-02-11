@@ -1,4 +1,4 @@
-﻿using static FlightsDiggingApp.Models.AirportsResponse;
+﻿using static FlightsDiggingApp.Models.RapidApi.RapidApiAirportsResponse;
 
 namespace FlightsDiggingApp.Models
 {

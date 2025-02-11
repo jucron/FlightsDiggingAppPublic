@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Any;
 using System.Threading;
 using FlightsDiggingApp.Mappers;
 using Microsoft.Extensions.Logging;
+using FlightsDiggingApp.Models.RapidApi;
 
 namespace FlightsDiggingApp.Services
 {
@@ -46,7 +47,7 @@ namespace FlightsDiggingApp.Services
                     var jsonString = await response.Content.ReadAsStringAsync();
                     if (jsonString != null)
                     {
-                        AirportsResponse finalResponse = JsonSerializer.Deserialize<AirportsResponse>(jsonString);
+                        RapidApiAirportsResponse finalResponse = JsonSerializer.Deserialize<RapidApiAirportsResponse>(jsonString);
                         if (finalResponse != null)
                         {
                             finalResponse.operationStatus = OperationStatus.CreateStatusSuccess();
@@ -67,7 +68,7 @@ namespace FlightsDiggingApp.Services
             }
         }
 
-        public async Task<RoundtripsResponse> GetRoundtripAsync(RoundtripsRequest request, int tries, string errorDescription)
+        public async Task<RapidApiRoundtripsResponse> GetRoundtripAsync(RoundtripsRequest request, int tries, string errorDescription)
         {
             var delayMillisecondsDefault = 1000;
 
@@ -78,7 +79,7 @@ namespace FlightsDiggingApp.Services
                 errorDescription = $"ExecuteSearchRoundTripAsync with NULL objects, tries remaining: {tries-1}";
                 _logger.LogInformation(errorDescription);
                 if (tries > 1) { return await GetRoundtripAsync(request, tries - 1, errorDescription); }
-                return new RoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
+                return new RapidApiRoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
             }
             var searchRoundTripData = resultSearchRoundTrip.data;
             //_logger.LogInformation($"resultSearchRoundTrip Status: {searchRoundTripData.context.status}");
@@ -88,14 +89,14 @@ namespace FlightsDiggingApp.Services
                 errorDescription = $"ExecuteSearchRoundTripAsync with status FAILURE, tries remaining: {tries-1}";
                 _logger.LogInformation(errorDescription);
                 if (tries > 1) { return await GetRoundtripAsync(request, tries - 1, errorDescription); }
-                return new RoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
+                return new RapidApiRoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
             }
             else if (searchRoundTripData.context.status == "complete")
             {
                 // todo: handle complete responses from ExecuteSearchRoundTripAsync
                 errorDescription = $"ExecuteSearchRoundTripAsync with status COMPLETE. Not implemented yet.";
                 _logger.LogInformation(errorDescription);
-                return new RoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
+                return new RapidApiRoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
             }
             else if (searchRoundTripData.context.status == "incomplete")
             {
@@ -139,7 +140,7 @@ namespace FlightsDiggingApp.Services
                 }
             }
             _logger.LogInformation(errorDescription);
-            return new RoundtripsResponse() { status = new() { hasError = true, errorDescription = errorDescription } };
+            return new RapidApiRoundtripsResponse() { status = new() { hasError = true, errorDescription = errorDescription } };
         }
 
         private async Task<SearchIncompleteResponse> ExecuteSearchIncompleteAsync(RoundtripsRequest roundTripRequest)

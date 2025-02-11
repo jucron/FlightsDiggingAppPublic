@@ -1,4 +1,5 @@
-﻿using static FlightsDiggingApp.Models.AirportsResponse;
+﻿using FlightsDiggingApp.Models.RapidApi;
+using static FlightsDiggingApp.Models.RapidApi.RapidApiAirportsResponse;
 
 namespace FlightsDiggingApp.Models
 {
@@ -8,7 +9,7 @@ namespace FlightsDiggingApp.Models
         public string to { get; set; }
         public string currency { get; set; }
         public int adults { get; set; }
-        public List<RoundtripsResponse.Child> children { get; set; }
+        public List<RapidApiRoundtripsResponse.Child> children { get; set; }
         public int infants { get; set; }
         public string cabinclass { get; set; }
         public string initDepartDateString { get; set; }
