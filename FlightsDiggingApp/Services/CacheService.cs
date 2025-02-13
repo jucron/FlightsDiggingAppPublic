@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using FlightsDiggingApp.Models;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -12,6 +13,11 @@ namespace FlightsDiggingApp.Services
         public CacheService(IMemoryCache cache)
         {
             _cache = cache;
+        }
+
+        public void ClearToken()
+        {
+            _cache.Remove(TOKEN_KEY);
         }
 
         public Guid GenerateUUID()
@@ -28,7 +34,7 @@ namespace FlightsDiggingApp.Services
         public RoundtripsResponseDTO RetrieveGetRoundtripsResponseDTO(Guid uuid)
         {
             var errorMessage = "Could not retrieve response from cache. Might have expired.";
-            var errorResponse = new RoundtripsResponseDTO() {status = OperationStatus.CreateStatusFailure(errorMessage) };
+            var errorResponse = new RoundtripsResponseDTO() {status = OperationStatus.CreateStatusFailure(HttpStatusCode.NotFound, errorMessage) };
             
             _cache.TryGetValue<RoundtripsResponseDTO>(uuid, out var response);
             

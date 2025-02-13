@@ -9,8 +9,10 @@ namespace FlightsDiggingApp.Models
 
         public class AirportOption
         {
-            public string id { get; set; }
-            public string name { get; set; }
+            public string iataCode { get; set; }
+            public string airport { get; set; }
+            public string city { get; set; }
+            public string country { get; set; }
         }
         
     }

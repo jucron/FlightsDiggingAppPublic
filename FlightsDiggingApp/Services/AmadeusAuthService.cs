@@ -23,6 +23,11 @@ namespace FlightsDiggingApp.Services
             _amadeusApiProperties = amadeusApiProperties.Value;
         }
 
+        public void ClearToken()
+        {
+           _cacheService.ClearToken();
+        }
+
         public string GetToken()
         {
             // Get first from cache
@@ -60,9 +65,9 @@ namespace FlightsDiggingApp.Services
 
             var apiResponse = await ApiCallUtility.PostAsyncFormUrlEncodedContent<AuthResponse>(baseUrl, parameters, headers);
 
-            if (apiResponse.status.hasError || apiResponse.data == null)
+            if (apiResponse.operationStatus.hasError || apiResponse.data == null)
             {
-                _logger.LogError("Error in GetAsyncToken: " + apiResponse.status.errorDescription);
+                _logger.LogError("Error in GetAsyncToken: " + apiResponse.operationStatus.errorDescription);
                 return "";
             }
             return apiResponse.data.access_token;

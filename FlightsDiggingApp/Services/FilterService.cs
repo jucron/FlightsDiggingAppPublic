@@ -1,4 +1,5 @@
-﻿using FlightsDiggingApp.Mappers;
+﻿using System.Net;
+using FlightsDiggingApp.Mappers;
 using FlightsDiggingApp.Models;
 
 namespace FlightsDiggingApp.Services
@@ -17,7 +18,7 @@ namespace FlightsDiggingApp.Services
 
             if (filter == null)
             {
-                return new RoundtripsResponseDTO { status = OperationStatus.CreateStatusFailure("Could not apply filter, because Filter object is null!")};
+                return new RoundtripsResponseDTO { status = OperationStatus.CreateStatusFailure(HttpStatusCode.NotFound,"Could not apply filter, because Filter object is null!")};
             } 
             if (filter.maxPrice != 0)
             {

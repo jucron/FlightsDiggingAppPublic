@@ -5,6 +5,7 @@ using System.Text.Json;
 using FlightsDiggingApp.Mappers;
 using Microsoft.Extensions.Logging;
 using FlightsDiggingApp.Models.RapidApi;
+using System.Net;
 
 namespace FlightsDiggingApp.Services
 {
@@ -34,7 +35,7 @@ namespace FlightsDiggingApp.Services
             var response = _apiService.GetAirportsAsync(query).Result;
             if (response == null)
             {
-                return new AirportsResponseDTO() { status = OperationStatus.CreateStatusFailure("Response from external API is null")};
+                return new AirportsResponseDTO() { status = OperationStatus.CreateStatusFailure(HttpStatusCode.NoContent,"Response from external API is null")};
             }
             return AirportsMapper.MapAirportsResponseToDTO(response);
         }
@@ -185,7 +186,7 @@ namespace FlightsDiggingApp.Services
         public CachedRoundTripsResponseDTO getCachedRoundTrips(CachedRoundTripsRequest request)
         {
             _logger.LogInformation($"Received request for CachedRoundTrips in request: {request}");
-            CachedRoundTripsResponseDTO cachedRoundTripsResponseDTO = new() { responses = [], status = OperationStatus.CreateStatusSuccess() };
+            CachedRoundTripsResponseDTO cachedRoundTripsResponseDTO = new() { responses = [], status = OperationStatus.CreateStatusSuccess(HttpStatusCode.OK) };
 
             foreach (var id in request.ids)
             {
@@ -193,7 +194,7 @@ namespace FlightsDiggingApp.Services
                 {
                     // Get Response from cache
                     var response = _cacheService.RetrieveGetRoundtripsResponseDTO(id);
-                    _logger.LogInformation($"Retrieved cached roundtrip with id: {id} and with flights size: {response.data.flights.Count}");
+                    _logger.LogInformation($"Retrieved cached roundtrip with iataCode: {id} and with flights size: {response.data.flights.Count}");
 
                     if (response.status.hasError) {
                         _logger.LogError(response.status.errorDescription);
@@ -209,9 +210,9 @@ namespace FlightsDiggingApp.Services
 
                 } catch (Exception ex)
                 {
-                    var errorMessage = $"Error retrieving cached roundtrip with id: {id}";
+                    var errorMessage = $"Error retrieving cached roundtrip with iataCode: {id}";
                     _logger.LogError(ex, errorMessage);
-                    cachedRoundTripsResponseDTO.status = OperationStatus.CreateStatusFailure(errorMessage);
+                    cachedRoundTripsResponseDTO.status = OperationStatus.CreateStatusFailure(HttpStatusCode.NoContent, errorMessage);
                     break;
                 }
             }

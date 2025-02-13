@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using FlightsDiggingApp.Models;
@@ -29,9 +30,12 @@ namespace FlightsDiggingApp.Helpers
 
             AddHeadersToRequest(request, headers);
 
+            HttpStatusCode statusCode = HttpStatusCode.ServiceUnavailable;
+
             try
             {
                 using var response = await _httpClient.SendAsync(request);
+                statusCode = response.StatusCode;
                 response.EnsureSuccessStatusCode(); // Throws if not 2xx
 
                 var jsonString = await response.Content.ReadAsStringAsync();
@@ -41,7 +45,7 @@ namespace FlightsDiggingApp.Helpers
 
                 return new ApiCallResponse<TResponse>
                 {
-                    status = OperationStatus.CreateStatusSuccess(),
+                    operationStatus = OperationStatus.CreateStatusSuccess(statusCode),
                     data = data
                 };
             }
@@ -52,7 +56,7 @@ namespace FlightsDiggingApp.Helpers
 
                 return new ApiCallResponse<TResponse>
                 {
-                    status = OperationStatus.CreateStatusFailure(errorMessage),
+                    operationStatus = OperationStatus.CreateStatusFailure(statusCode,errorMessage),
                     data = default
                 };
             }
@@ -76,9 +80,12 @@ namespace FlightsDiggingApp.Helpers
 
             AddHeadersToRequest(request, headers);
 
+            HttpStatusCode statusCode = HttpStatusCode.ServiceUnavailable;
+
             try
             {
                 using var response = await _httpClient.SendAsync(request);
+                statusCode = response.StatusCode;
                 response.EnsureSuccessStatusCode(); // Throws if not 2xx
 
                 var jsonString = await response.Content.ReadAsStringAsync();
@@ -88,7 +95,7 @@ namespace FlightsDiggingApp.Helpers
 
                 return new ApiCallResponse<TResponse>
                 {
-                    status = OperationStatus.CreateStatusSuccess(),
+                    operationStatus = OperationStatus.CreateStatusSuccess(statusCode),
                     data = data
                 };
             }
@@ -99,7 +106,7 @@ namespace FlightsDiggingApp.Helpers
 
                 return new ApiCallResponse<TResponse>
                 {
-                    status = OperationStatus.CreateStatusFailure(errorMessage),
+                    operationStatus = OperationStatus.CreateStatusFailure(statusCode, errorMessage),
                     data = default
                 };
             }
@@ -117,9 +124,12 @@ namespace FlightsDiggingApp.Helpers
 
             AddHeadersToRequest(request, headers);
 
+            HttpStatusCode statusCode = HttpStatusCode.ServiceUnavailable;
+
             try
             {
                 using var response = await _httpClient.SendAsync(request);
+                statusCode = response.StatusCode;
                 response.EnsureSuccessStatusCode(); // Throws if not 2xx
 
                 var jsonString = await response.Content.ReadAsStringAsync();
@@ -129,7 +139,7 @@ namespace FlightsDiggingApp.Helpers
 
                 return new ApiCallResponse<TResponse>
                 {
-                    status = OperationStatus.CreateStatusSuccess(),
+                    operationStatus = OperationStatus.CreateStatusSuccess(statusCode),
                     data = data
                 };
             }
@@ -140,7 +150,7 @@ namespace FlightsDiggingApp.Helpers
 
                 return new ApiCallResponse<TResponse>
                 {
-                    status = OperationStatus.CreateStatusFailure(errorMessage),
+                    operationStatus = OperationStatus.CreateStatusFailure(statusCode, errorMessage),
                     data = default
                 };
             }

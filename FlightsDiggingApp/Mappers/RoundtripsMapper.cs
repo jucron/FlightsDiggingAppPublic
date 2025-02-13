@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Net;
+using System.Text.Json;
 using FlightsDiggingApp.Models;
 using FlightsDiggingApp.Models.RapidApi;
 using Microsoft.AspNetCore.Http;
@@ -45,7 +46,7 @@ namespace FlightsDiggingApp.Mappers
 
             return responseCopy ?? new RoundtripsResponseDTO
             {
-                status = OperationStatus.CreateStatusFailure("Deep copy resulted in null in RoundtripsMapper.CreateCopyOfGetRoundtripsResponseDTO()")
+                status = OperationStatus.CreateStatusFailure(responseDTO.status.status.httpStatus,"Deep copy resulted in null in RoundtripsMapper.CreateCopyOfGetRoundtripsResponseDTO()")
             };
         }
 
@@ -69,7 +70,7 @@ namespace FlightsDiggingApp.Mappers
             response.infants = request.infants;
             response.cabinclass = request.cabinclass;
             response.flights = new List<RapidApiRoundtripsResponse.Flight>();
-            response.status = OperationStatus.CreateStatusSuccess();
+            response.status = OperationStatus.CreateStatusSuccess(HttpStatusCode.OK);
 
             // For each itineraty:
             foreach (var itinerary in result.data.itineraries)
@@ -94,7 +95,7 @@ namespace FlightsDiggingApp.Mappers
                     // Add companies to this flight
                     foreach (var marketingCarrier in leg.carriers.marketing)
                     {
-                        // Add if there is no company with the same name
+                        // Add if there is no company with the same airport
                         if (!companies.Any(c => c.name == marketingCarrier.name))
                         {
                             companies.Add(new RapidApiRoundtripsResponse.Company
@@ -114,12 +115,12 @@ namespace FlightsDiggingApp.Mappers
 
 
                 response.flights.Add(flight);
-                response.link = GenerateLinkByResponse(response);
+                response.link = GenerateScannerLinkByResponse(response);
             }
             return response;
         }
 
-        private static string GenerateLinkByResponse(RapidApiRoundtripsResponse response)
+        private static string GenerateScannerLinkByResponse(RapidApiRoundtripsResponse response)
         {
             string baseUrl = "https://www.skyscanner.com/transport/flights";
 

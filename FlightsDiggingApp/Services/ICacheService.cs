@@ -12,5 +12,6 @@ namespace FlightsDiggingApp.Services
 
         public string GetToken();
         public void SetToken(string token);
+        void ClearToken();
     }
 }

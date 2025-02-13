@@ -8,8 +8,10 @@ using FlightsDiggingApp.Mappers;
 using Microsoft.Extensions.Logging;
 using FlightsDiggingApp.Models.RapidApi;
 
+/*
 namespace FlightsDiggingApp.Services
 {
+    
     public class RapidApiService : IApiService
     {
         private readonly string _rapidapi_key = "441f8260camsh5ee529fad4a52c9p1cadf2jsnd01e83b82152";
@@ -22,7 +24,7 @@ namespace FlightsDiggingApp.Services
 
         // tries is optional parameter
 
-        public async Task<AirportsResponseDTO> GetAirportsAsync(string query, int tries = 3)
+        public async Task<IApiServiceResponse> GetAirportsAsync(string query, int tries)
         {
             _logger.LogInformation($"GetAirportsAsync with query: <{query}>. Tries left: {tries-1}");
             //trim whitespaces of query at ends
@@ -54,7 +56,7 @@ namespace FlightsDiggingApp.Services
                             return AirportsMapper.MapGetAirportsResponseToDTO(finalResponse);
                         }
                     }
-                    return new AirportsResponseDTO() { status = OperationStatus.CreateStatusFailure("Unexpected error -> jsonstring from response API is null") };
+                    return new AirportsResponseDTO() { operationStatus = OperationStatus.CreateStatusFailure("Unexpected error -> jsonstring from response API is null") };
                 }
             }
             catch (Exception ex)
@@ -64,11 +66,11 @@ namespace FlightsDiggingApp.Services
                 {
                     return await GetAirportsAsync(query, tries-1);
                 }
-                return new AirportsResponseDTO() { status = OperationStatus.CreateStatusFailure("Unexpected error -> "+ex.ToString()) };
+                return new AirportsResponseDTO() { operationStatus = OperationStatus.CreateStatusFailure("Unexpected error -> "+ex.ToString()) };
             }
         }
 
-        public async Task<RapidApiRoundtripsResponse> GetRoundtripAsync(RoundtripsRequest request, int tries, string errorDescription)
+        public async Task<IApiServiceResponse> GetRoundtripAsync(RoundtripsRequest request, int tries, string errorDescription)
         {
             var delayMillisecondsDefault = 1000;
 
@@ -79,26 +81,26 @@ namespace FlightsDiggingApp.Services
                 errorDescription = $"ExecuteSearchRoundTripAsync with NULL objects, tries remaining: {tries-1}";
                 _logger.LogInformation(errorDescription);
                 if (tries > 1) { return await GetRoundtripAsync(request, tries - 1, errorDescription); }
-                return new RapidApiRoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
+                return new RapidApiRoundtripsResponse() { operationStatus = OperationStatus.CreateStatusFailure(errorDescription) };
             }
             var searchRoundTripData = resultSearchRoundTrip.data;
-            //_logger.LogInformation($"resultSearchRoundTrip Status: {searchRoundTripData.context.status}");
+            //_logger.LogInformation($"resultSearchRoundTrip operationStatus: {searchRoundTripData.context.operationStatus}");
 
-            if (searchRoundTripData.context.status == "failure")
+            if (searchRoundTripData.context.operationStatus == "failure")
             {
-                errorDescription = $"ExecuteSearchRoundTripAsync with status FAILURE, tries remaining: {tries-1}";
+                errorDescription = $"ExecuteSearchRoundTripAsync with operationStatus FAILURE, tries remaining: {tries-1}";
                 _logger.LogInformation(errorDescription);
                 if (tries > 1) { return await GetRoundtripAsync(request, tries - 1, errorDescription); }
-                return new RapidApiRoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
+                return new RapidApiRoundtripsResponse() { operationStatus = OperationStatus.CreateStatusFailure(errorDescription) };
             }
-            else if (searchRoundTripData.context.status == "complete")
+            else if (searchRoundTripData.context.operationStatus == "complete")
             {
                 // todo: handle complete responses from ExecuteSearchRoundTripAsync
-                errorDescription = $"ExecuteSearchRoundTripAsync with status COMPLETE. Not implemented yet.";
+                errorDescription = $"ExecuteSearchRoundTripAsync with operationStatus COMPLETE. Not implemented yet.";
                 _logger.LogInformation(errorDescription);
-                return new RapidApiRoundtripsResponse() { status = OperationStatus.CreateStatusFailure(errorDescription) };
+                return new RapidApiRoundtripsResponse() { operationStatus = OperationStatus.CreateStatusFailure(errorDescription) };
             }
-            else if (searchRoundTripData.context.status == "incomplete")
+            else if (searchRoundTripData.context.operationStatus == "incomplete")
             {
                 request.sessionId = searchRoundTripData.context.sessionId.TrimEnd('=');
 
@@ -130,9 +132,9 @@ namespace FlightsDiggingApp.Services
                     }
 
                     var searchIncompleteData = resultSearchIncomplete.data;
-                    //_logger.LogInformation($"resultSearchIncomplete Status: {searchIncompleteData?.context?.status}");
+                    //_logger.LogInformation($"resultSearchIncomplete operationStatus: {searchIncompleteData?.context?.operationStatus}");
 
-                    if (searchIncompleteData?.context.status == "complete")
+                    if (searchIncompleteData?.context.operationStatus == "complete")
                     {
                         // Success
                         return RoundtripsMapper.MapSearchIncompleteResponseToGetRoundtripsResponse(resultSearchIncomplete, request);
@@ -140,7 +142,7 @@ namespace FlightsDiggingApp.Services
                 }
             }
             _logger.LogInformation(errorDescription);
-            return new RapidApiRoundtripsResponse() { status = new() { hasError = true, errorDescription = errorDescription } };
+            return new RapidApiRoundtripsResponse() { operationStatus = new() { hasError = true, errorDescription = errorDescription } };
         }
 
         private async Task<SearchIncompleteResponse> ExecuteSearchIncompleteAsync(RoundtripsRequest roundTripRequest)
@@ -230,3 +232,4 @@ namespace FlightsDiggingApp.Services
         }
     }
 }
+*/

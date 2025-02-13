@@ -48,10 +48,12 @@ namespace FlightsDiggingApp.Controllers
             return _flightsDiggerService.GetAirports(query);
         }
 
+        // TESTING ENDPOINTS - DEACTIVATE IN PROD
         [HttpGet("authtoken")]
         public string GetAuthToken()
         {
             return _flightsDiggerService.GetAuthToken();
         }
+
     }
 }

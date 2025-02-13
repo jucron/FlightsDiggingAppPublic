@@ -2,6 +2,7 @@
 {
     public interface IAuthService
     {
+        void ClearToken();
         public string GetToken();
     }
 }

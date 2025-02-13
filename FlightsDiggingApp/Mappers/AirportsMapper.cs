@@ -12,7 +12,7 @@ namespace FlightsDiggingApp.Mappers
             return airportResponse switch
             {
                 AmadeusAirportResponse amadeusAirportResponse => MapAmadeusAirportResponseToDTO(amadeusAirportResponse),
-               
+
                 RapidApiAirportsResponse rapidApiAirportsResponse => MapRapidApiAirportResponseToDTO(rapidApiAirportsResponse),
 
                 _ => throw new ArgumentException("Unknown response type")
@@ -33,8 +33,8 @@ namespace FlightsDiggingApp.Mappers
             {
                 response.AirportOptions.Add(new AirportOption
                 {
-                    name = airportResponse.presentation.suggestionTitle,
-                    id = airportResponse.navigation.relevantFlightParams.skyId
+                    city = airportResponse.presentation.suggestionTitle,
+                    iataCode = airportResponse.navigation.relevantFlightParams.skyId
                 });
             }
             response.status = rapidApiAirportsResponse.operationStatus;
@@ -43,7 +43,24 @@ namespace FlightsDiggingApp.Mappers
 
         private static AirportsResponseDTO MapAmadeusAirportResponseToDTO(AmadeusAirportResponse amadeusAirportResponse)
         {
-            throw new NotImplementedException();
+            var response = new AirportsResponseDTO { AirportOptions = [] };
+            response.status = amadeusAirportResponse.operationStatus;
+
+            if (amadeusAirportResponse.data != null)
+            {
+
+                response.AirportOptions = amadeusAirportResponse.data
+                    .GroupBy(airport => airport.iataCode)
+                    .Select(group => new AirportOption
+                    {
+                        iataCode = group.Key,
+                        city = group.First().address.cityName,
+                        country = group.First().address.countryName,
+                        airport = string.Join(", ", group.Where(a => a.subType == "AIRPORT").Select(a => a.name))
+                    })
+                    .ToList();
+            }
+            return response;
         }
     }
 }
