@@ -25,7 +25,7 @@ namespace FlightsDiggingApp.Controllers
             _flightsDiggerService = flightsDiggerService;
         }
 
-        [HttpGet("getroundtrips")]
+        /*[HttpGet("getroundtrips")]
         public async Task GetRoundTrips()
         {
             _logger.LogInformation(">>>>>>>>>>Starting: GetRoundTrips");
@@ -41,6 +41,7 @@ namespace FlightsDiggingApp.Controllers
             }
             
         }
+        */
 
         [HttpGet("airports")]
         public AirportsResponseDTO GetAirports([FromQuery] string query)
@@ -53,6 +54,25 @@ namespace FlightsDiggingApp.Controllers
         public string GetAuthToken()
         {
             return _flightsDiggerService.GetAuthToken();
+        }
+
+        [HttpGet("getroundtrip")]
+        public RoundtripResponseDTO GetRoundTrip([FromQuery] string from, string to, string departDate,
+            string returnDate, string currency, int adults, int children, int infants, string travelClass)
+        {
+            var request = new RoundtripRequest()
+            {
+                from = from,
+                to = to,
+                departDate = departDate,
+                returnDate = returnDate,
+                currency = currency,
+                adults = adults,
+                children = children,
+                infants = infants,
+                travelClass = travelClass
+            };
+            return _flightsDiggerService.GetRoundTrip(request);
         }
 
     }

@@ -9,5 +9,6 @@ namespace FlightsDiggingApp.Services
         CachedRoundTripsResponseDTO getCachedRoundTrips(CachedRoundTripsRequest request);
         public Task HandleRoundTripsAsync(WebSocket webSocket);
         public string GetAuthToken();
+        public RoundtripResponseDTO GetRoundTrip(RoundtripRequest request);
     }
 }

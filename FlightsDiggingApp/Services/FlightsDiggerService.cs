@@ -40,6 +40,11 @@ namespace FlightsDiggingApp.Services
             return AirportsMapper.MapAirportsResponseToDTO(response);
         }
 
+        public RoundtripResponseDTO GetRoundTrip(RoundtripRequest request)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task HandleRoundTripsAsync(WebSocket webSocket)
         {
             var buffer = new byte[1024 * 4];
@@ -218,6 +223,8 @@ namespace FlightsDiggingApp.Services
             }
             return cachedRoundTripsResponseDTO;
         }
+
+       
     }
 
 }
