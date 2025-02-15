@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Text.Json;
 using FlightsDiggingApp.Models;
+using FlightsDiggingApp.Models.Amadeus;
 using FlightsDiggingApp.Models.RapidApi;
 using Microsoft.AspNetCore.Http;
 using static FlightsDiggingApp.Models.AirportsResponseDTO;
@@ -15,7 +16,6 @@ namespace FlightsDiggingApp.Mappers
         {
             return new RoundtripsResponseDTO() { data = getRoundtripsResponse, status = getRoundtripsResponse.status };
         }
-
         public static RoundtripsRequest CreateCopyOfGetRoundtripsRequest(RoundtripsRequest request, DateTime departDate, DateTime returnDate)
         {
             return new RoundtripsRequest
@@ -149,5 +149,6 @@ namespace FlightsDiggingApp.Mappers
 
             return url;
         }
+
     }
 }

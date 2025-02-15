@@ -2,12 +2,11 @@
 {
     public class AmadeusSearchFlightsResponse : IApiServiceResponse
     {
-        public OperationStatus Status { get; set; }
-        public List<AmadeusErrors> errors { get; set; }
-
         public Meta meta { get; set; }
         public List<Datum> data { get; set; }
         public Dictionaries dictionaries { get; set; }
+        public OperationStatus operationStatus { get; set; }
+        public List<AmadeusErrors> errors { get; set; }
 
         public class Aircraft
         {

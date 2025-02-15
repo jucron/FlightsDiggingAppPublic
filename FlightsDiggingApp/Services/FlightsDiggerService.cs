@@ -9,7 +9,7 @@ using System.Net;
 
 namespace FlightsDiggingApp.Services
 {
-    public class FlightsDiggerService: IFlightsDiggerService
+    public class FlightsDiggerService : IFlightsDiggerService
     {
         private readonly ILogger<FlightsDiggerService> _logger;
         private readonly IApiService _apiService;
@@ -35,14 +35,35 @@ namespace FlightsDiggingApp.Services
             var response = _apiService.GetAirportsAsync(query).Result;
             if (response == null)
             {
-                return new AirportsResponseDTO() { status = OperationStatus.CreateStatusFailure(HttpStatusCode.NoContent,"Response from external API is null")};
+                return new AirportsResponseDTO() { status = OperationStatus.CreateStatusFailure(HttpStatusCode.NoContent, "Response from external API is null") };
             }
             return AirportsMapper.MapAirportsResponseToDTO(response);
         }
 
         public RoundtripResponseDTO GetRoundTrip(RoundtripRequest request)
         {
-            throw new NotImplementedException();
+            var response = _apiService.GetRoundtripAsync(request).Result;
+            if (response == null)
+            {
+                return new RoundtripResponseDTO() { status = OperationStatus.CreateStatusFailure(HttpStatusCode.NoContent, "Response from external API is null") };
+            }
+
+            // Map response to DTO
+            var responseDTO = RoundtripMapper.MapGetRoundtripResponseToDTO(response, request);
+
+            // If response have error, no need to Store in cache or apply filter
+            if (responseDTO.status.hasError) { return responseDTO; }
+
+            // Generate UUID
+            responseDTO.id = _cacheService.GenerateUUID();
+
+            // Persist in cache for future filterings
+            _cacheService.StoreRoundtripResponseDTO(responseDTO);
+
+            // Apply filter the DTO before sending it to front
+            RoundtripResponseDTO filteredResponseDTO = _filterService.FilterRoundtripResponseDTO(request.filter, responseDTO);
+
+            return responseDTO;
         }
 
         public async Task HandleRoundTripsAsync(WebSocket webSocket)
@@ -87,10 +108,10 @@ namespace FlightsDiggingApp.Services
 
                             // Create a copy of the request for each iteration
                             var requestCopy = RoundtripsMapper.CreateCopyOfGetRoundtripsRequest(request, departDate, returnDate);
-
+                            /*
                             // Add the request processing as a task to the list
                             tasks.Add(ProcessRoundtripAsyncWithConcurrentControl(requestCopy, webSocket, semaphore));
-
+                            */
                             if (tasks.Count >= batchSize)
                             {
                                 await Task.WhenAll(tasks);
@@ -121,7 +142,7 @@ namespace FlightsDiggingApp.Services
                 await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Finished sending data", CancellationToken.None);
             }
         }
-
+        /*
         private async Task ProcessRoundtripAsyncWithConcurrentControl(RoundtripsRequest request, WebSocket webSocket, SemaphoreSlim semaphore)
         {
             await semaphore.WaitAsync(); // Wait for an available slot
@@ -134,7 +155,7 @@ namespace FlightsDiggingApp.Services
                 semaphore.Release(); // Release the slot for the next task
             }
         }
-
+        
         private async Task ProcessRoundtripAsync(RoundtripsRequest requestCopy, WebSocket webSocket)
         {
             try
@@ -187,9 +208,10 @@ namespace FlightsDiggingApp.Services
                                           CancellationToken.None);
             }
         }
-
+        */
         public CachedRoundTripsResponseDTO getCachedRoundTrips(CachedRoundTripsRequest request)
         {
+            /*
             _logger.LogInformation($"Received request for CachedRoundTrips in request: {request}");
             CachedRoundTripsResponseDTO cachedRoundTripsResponseDTO = new() { responses = [], status = OperationStatus.CreateStatusSuccess(HttpStatusCode.OK) };
 
@@ -222,9 +244,9 @@ namespace FlightsDiggingApp.Services
                 }
             }
             return cachedRoundTripsResponseDTO;
+        */
+            return new CachedRoundTripsResponseDTO();
         }
-
-       
     }
 
 }

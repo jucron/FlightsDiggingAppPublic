@@ -31,14 +31,17 @@ namespace FlightsDiggingApp.Services
             return token != null ? token : "";
         }
 
-        public RoundtripsResponseDTO RetrieveGetRoundtripsResponseDTO(Guid uuid)
+        public RoundtripResponseDTO RetrieveRoundtripResponseDTO(Guid uuid)
+        {
+            _cache.TryGetValue<RoundtripResponseDTO>(uuid, out var response);
+
+            return (response != null) ? response : CreateResponseWithCacheError();
+        }
+
+        private RoundtripResponseDTO CreateResponseWithCacheError()
         {
             var errorMessage = "Could not retrieve response from cache. Might have expired.";
-            var errorResponse = new RoundtripsResponseDTO() {status = OperationStatus.CreateStatusFailure(HttpStatusCode.NotFound, errorMessage) };
-            
-            _cache.TryGetValue<RoundtripsResponseDTO>(uuid, out var response);
-            
-            return (response != null) ? response : errorResponse;
+            return new RoundtripResponseDTO() { status = OperationStatus.CreateStatusFailure(HttpStatusCode.NotFound, errorMessage) };
         }
 
         public void SetToken(string token)
@@ -51,10 +54,9 @@ namespace FlightsDiggingApp.Services
             _cache.Set(TOKEN_KEY, token, cacheEntryOptions);
         }
 
-        public bool StoreGetRoundtripsResponseDTO(RoundtripsResponseDTO getRoundtripsResponseDTO, TimeSpan? expiration = null)
+        public bool StoreRoundtripResponseDTO(RoundtripResponseDTO responseDTO, TimeSpan? expiration = null)
         {
-
-            Guid uuid = getRoundtripsResponseDTO.id;
+            Guid uuid = responseDTO.id;
             if (uuid == Guid.Empty)
             {
                 return false;
@@ -64,9 +66,8 @@ namespace FlightsDiggingApp.Services
                 AbsoluteExpirationRelativeToNow = expiration ?? TimeSpan.FromMinutes(10)
             };
 
-            _cache.Set(uuid, getRoundtripsResponseDTO, cacheEntryOptions);
+            _cache.Set(uuid, responseDTO, cacheEntryOptions);
             return true;
         }
-
     }
 }

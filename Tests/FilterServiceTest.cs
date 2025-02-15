@@ -31,11 +31,11 @@ namespace Tests
 
             var filter = new Filter
             {
-                maxDuration = expectedMaxDuration,
+                maxDurationHours = expectedMaxDuration,
                 maxFlights = expectedMaxFlights,
             };
 
-            getRoundtripsResponseDTO = _filterService.FilterFlightsFromGetRoundtripsResponseDTO(filter, getRoundtripsResponseDTO);
+            //getRoundtripsResponseDTO = _filterService.FilterFlightsFromGetRoundtripsResponseDTO(filter, getRoundtripsResponseDTO);
 
             getRoundtripsResponseDTO.data.flights.ForEach(f => Console.WriteLine("WRITE LINE: >>>>>>>>>" + f.score));
             

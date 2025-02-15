@@ -14,7 +14,7 @@ namespace FlightsDiggingApp.Services
     {
         private readonly ICacheService _cacheService;
         private readonly ILogger<AmadeusAuthService> _logger;
-        AmadeusApiProperties _amadeusApiProperties;
+        private readonly AmadeusApiProperties _amadeusApiProperties;
 
         public AmadeusAuthService(ICacheService cacheService, ILogger<AmadeusAuthService> logger, IOptions<AmadeusApiProperties> amadeusApiProperties)
         {

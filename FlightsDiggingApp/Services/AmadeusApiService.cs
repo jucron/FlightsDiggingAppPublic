@@ -6,6 +6,7 @@ using FlightsDiggingApp.Properties;
 using FlightsDiggingApp.Helpers;
 using FlightsDiggingApp.Models.Amadeus;
 using System.Net;
+using Microsoft.Extensions.Options;
 
 namespace FlightsDiggingApp.Services
 {
@@ -13,11 +14,13 @@ namespace FlightsDiggingApp.Services
     {
         private readonly ILogger<AmadeusApiService> _logger;
         private readonly IAuthService _authService;
+        private readonly AmadeusApiProperties _amadeusApiProperties;
 
-        public AmadeusApiService(ILogger<AmadeusApiService> logger, IAuthService authService)
+        public AmadeusApiService(ILogger<AmadeusApiService> logger, IAuthService authService, IOptions<AmadeusApiProperties> amadeusApiProperties)
         {
             _logger = logger;
             _authService = authService;
+            _amadeusApiProperties = amadeusApiProperties.Value;
         }
 
         public async Task<IApiServiceResponse> GetAirportsAsync(string query, int tries = 3)
@@ -38,7 +41,7 @@ namespace FlightsDiggingApp.Services
 
             var bearerToken = _authService.GetToken();
 
-            var baseUrl = "https://test.api.amadeus.com/v1/reference-data/locations";
+            var baseUrl = _amadeusApiProperties.base_url_getairports;
 
             var apiResponse = await ApiCallUtility.GetAsync<AmadeusAirportResponse>(baseUrl,parameters,headers, bearerToken);
 
@@ -64,9 +67,50 @@ namespace FlightsDiggingApp.Services
             return apiResponse.data;
         }
 
-        public Task<IApiServiceResponse> GetRoundtripAsync(RoundtripsRequest request, int tries = 3, string errorDescription = "Unexpected error/operationStatus")
+        public async Task<IApiServiceResponse> GetRoundtripAsync(RoundtripRequest request, int tries = 3)
         {
-            throw new NotImplementedException();
+            var triesLeft = tries - 1;
+            _logger.LogInformation($"GetRoundtripAsync triggered. Tries left: {triesLeft}");
+
+            var parameters = new Dictionary<string, string>
+            {
+                { "originLocationCode", request.from },
+                { "destinationLocationCode", request.to },
+                { "departureDate", request.departDate },
+                { "returnDate", request.returnDate },
+                { "adults", request.adults.ToString() },
+                { "children", request.children.ToString() },
+                { "infants", request.infants.ToString() },
+                { "travelClass", request.travelClass },
+                { "currencyCode", request.currency }
+            };
+
+            var bearerToken = _authService.GetToken();
+
+            var baseUrl = _amadeusApiProperties.base_url_roundtrips;
+
+            var apiResponse = await ApiCallUtility.GetAsync<AmadeusSearchFlightsResponse>(baseUrl, parameters, null, bearerToken);
+
+            if (apiResponse.operationStatus.hasError || apiResponse.data == null)
+            {
+                _logger.LogError("Error in GetRoundtripAsync: " + apiResponse.operationStatus.errorDescription);
+
+                // If tries still available
+                if (triesLeft > 0)
+                {
+                    // If token expired, clear it from cache. The getToken will renew in the next call
+                    if (apiResponse.operationStatus.status.httpStatus == HttpStatusCode.Unauthorized)
+                    {
+                        _authService.ClearToken();
+                    }
+                    Task.Delay(2000).Wait();
+                    return await GetRoundtripAsync(request, triesLeft);
+                }
+                // API tries expired
+                return new AmadeusSearchFlightsResponse() { operationStatus = apiResponse.operationStatus };
+            }
+            apiResponse.data.operationStatus = apiResponse.operationStatus;
+            return apiResponse.data;
         }
     }
 }

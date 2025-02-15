@@ -4,6 +4,6 @@ namespace FlightsDiggingApp.Services
 {
     public interface IFilterService
     {
-        public RoundtripsResponseDTO FilterFlightsFromGetRoundtripsResponseDTO(Filter filter, RoundtripsResponseDTO getRoundtripsResponseDTO);
+        public RoundtripResponseDTO FilterRoundtripResponseDTO(Filter filter, RoundtripResponseDTO responseDTO);
     }
 }
