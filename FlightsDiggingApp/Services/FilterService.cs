@@ -1,22 +1,25 @@
 ﻿using System.Net;
 using FlightsDiggingApp.Mappers;
 using FlightsDiggingApp.Models;
+using FlightsDiggingApp.Properties;
+using Microsoft.Extensions.Options;
 
 namespace FlightsDiggingApp.Services
 {
     public class FilterService : IFilterService
     {
-        ILogger<FilterService> _logger;
-        public FilterService(ILogger<FilterService> logger)
+        private readonly ILogger<FilterService> _logger;
+        private readonly AmadeusApiProperties _amadeusApiProperties;
+        public FilterService(ILogger<FilterService> logger, IOptions<AmadeusApiProperties> amadeusApiProperties)
         {
             _logger = logger;
+            _amadeusApiProperties = amadeusApiProperties.Value;
         }
 
         public RoundtripResponseDTO FilterRoundtripResponseDTO(Filter filter, RoundtripResponseDTO responseDTO)
         {
 
             var filteredResponseDTO = RoundtripMapper.CreateCopyOfRoundtripResponseDTO(responseDTO);
-            var originalFlightsCount = responseDTO.data.Count;
 
             if (filter == null)
             {
@@ -45,27 +48,45 @@ namespace FlightsDiggingApp.Services
 
             FilterByMaxFlights(filter.maxFlights, filteredResponseDTO);
 
-            ApplyMetrics(filteredResponseDTO, originalFlightsCount);
+            bool isFiltered = true;
+            ApplyMetrics(filteredResponseDTO, isFiltered);
 
             // Returns filtered content
             return filteredResponseDTO;
         }
 
-        private void ApplyMetrics(RoundtripResponseDTO filteredResponseDTO, int originalFlightsCount)
+        public void ApplyMetrics(RoundtripResponseDTO responseDTO, bool isFiltered = false)
         {
-            filteredResponseDTO.metrics = new RoundTripMetrics() {
-                totalFlightsFiltered = filteredResponseDTO.data.Count,
-                totalFlightsOriginal = originalFlightsCount,
-                maxHours = filteredResponseDTO.data.Max(flight => flight.duration.hours),
-                minHours = filteredResponseDTO.data.Min(flight => flight.duration.hours),
-                maxPrice = filteredResponseDTO.data.Max(flight => flight.price.total),
-                minPrice = filteredResponseDTO.data.Min(flight => flight.price.total),
-            };
+            responseDTO.metrics ??= new RoundTripMetrics();
+
+            if (isFiltered)
+            {
+                responseDTO.metrics.filteredMetrics = new RoundTripMetrics.Metrics()
+                {
+                    totalFlights = responseDTO.data.Count,
+                    maxHours = responseDTO.data.Any() ? responseDTO.data.Max(flight => flight.duration.hours) : 0,
+                    minHours = responseDTO.data.Any() ? responseDTO.data.Min(flight => flight.duration.hours) : 0,
+                    maxPrice = responseDTO.data.Any() ? responseDTO.data.Max(flight => flight.price.total) : 0,
+                    minPrice = responseDTO.data.Any() ? responseDTO.data.Min(flight => flight.price.total) : 0,
+                };
+            }
+            else
+            {
+                responseDTO.metrics.originalMetrics = new RoundTripMetrics.Metrics()
+                {
+                    totalFlights = responseDTO.data.Count,
+                    maxHours = responseDTO.data.Any() ? responseDTO.data.Max(flight => flight.duration.hours) : 0,
+                    minHours = responseDTO.data.Any() ? responseDTO.data.Min(flight => flight.duration.hours) : 0,
+                    maxPrice = responseDTO.data.Any() ? responseDTO.data.Max(flight => flight.price.total) : 0,
+                    minPrice = responseDTO.data.Any() ? responseDTO.data.Min(flight => flight.price.total) : 0,
+                };
+            }
+        
         }
 
         private void FilterByMaxFlights(int maxFlights, RoundtripResponseDTO roundtripResponseDTO)
         {
-            int maxFlightsCap = 100;
+            int maxFlightsCap = _amadeusApiProperties.limit_roundtrip_flights;
             // If maxFlights is 0 or larger than the limit, set it to the limit
             maxFlights = (maxFlights == 0 || maxFlights > maxFlightsCap) ? maxFlightsCap : maxFlights;
 

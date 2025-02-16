@@ -56,24 +56,16 @@ namespace FlightsDiggingApp.Controllers
             return _flightsDiggerService.GetAuthToken();
         }
 
-        [HttpGet("getroundtrip")]
-        public RoundtripResponseDTO GetRoundTrip([FromQuery] string from, string to, string departDate,
-            string returnDate, string currency, int adults, int children, int infants, string travelClass)
+        [HttpPost("singleroundtrip")]
+        public RoundtripResponseDTO SingleRoundTrip([FromBody] RoundtripRequest request)
         {
-            var request = new RoundtripRequest()
-            {
-                from = from,
-                to = to,
-                departDate = departDate,
-                returnDate = returnDate,
-                currency = currency,
-                adults = adults,
-                children = children,
-                infants = infants,
-                travelClass = travelClass
-            };
             return _flightsDiggerService.GetRoundTrip(request);
         }
 
+        [HttpPost("cachedroundtrips")]
+        public CachedRoundTripsResponseDTO CachedRoundTrips([FromBody] CachedRoundTripsRequest request)
+        {
+            return _flightsDiggerService.GetCachedRoundTrips(request);
+        }
     }
 }

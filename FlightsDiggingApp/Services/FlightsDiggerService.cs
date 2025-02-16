@@ -51,11 +51,14 @@ namespace FlightsDiggingApp.Services
             // Map response to DTO
             var responseDTO = RoundtripMapper.MapGetRoundtripResponseToDTO(response, request);
 
-            // If response have error, no need to Store in cache or apply filter
+            // If response have error, no need to store in cache or apply filter
             if (responseDTO.status.hasError) { return responseDTO; }
 
             // Generate UUID
             responseDTO.id = _cacheService.GenerateUUID();
+
+            // Generate original Metrics
+            _filterService.ApplyMetrics(responseDTO);
 
             // Persist in cache for future filterings
             _cacheService.StoreRoundtripResponseDTO(responseDTO);
@@ -63,7 +66,8 @@ namespace FlightsDiggingApp.Services
             // Apply filter the DTO before sending it to front
             RoundtripResponseDTO filteredResponseDTO = _filterService.FilterRoundtripResponseDTO(request.filter, responseDTO);
 
-            return responseDTO;
+            // Return filtered results
+            return filteredResponseDTO;
         }
 
         public async Task HandleRoundTripsAsync(WebSocket webSocket)
@@ -209,10 +213,9 @@ namespace FlightsDiggingApp.Services
             }
         }
         */
-        public CachedRoundTripsResponseDTO getCachedRoundTrips(CachedRoundTripsRequest request)
+        public CachedRoundTripsResponseDTO GetCachedRoundTrips(CachedRoundTripsRequest request)
         {
-            /*
-            _logger.LogInformation($"Received request for CachedRoundTrips in request: {request}");
+            _logger.LogInformation($"GetCachedRoundTrips triggered: {request}");
             CachedRoundTripsResponseDTO cachedRoundTripsResponseDTO = new() { responses = [], status = OperationStatus.CreateStatusSuccess(HttpStatusCode.OK) };
 
             foreach (var id in request.ids)
@@ -220,8 +223,7 @@ namespace FlightsDiggingApp.Services
                 try
                 {
                     // Get Response from cache
-                    var response = _cacheService.RetrieveGetRoundtripsResponseDTO(id);
-                    _logger.LogInformation($"Retrieved cached roundtrip with iataCode: {id} and with flights size: {response.data.flights.Count}");
+                    var response = _cacheService.RetrieveRoundtripResponseDTO(id);
 
                     if (response.status.hasError) {
                         _logger.LogError(response.status.errorDescription);
@@ -230,22 +232,20 @@ namespace FlightsDiggingApp.Services
                     }
 
                     // Filter the response
-                    var filteredResponse = _filterService.FilterFlightsFromGetRoundtripsResponseDTO(request.filter, response);
+                    var filteredResponse = _filterService.FilterRoundtripResponseDTO(request.filter, response);
 
                     // Add to the list
                     cachedRoundTripsResponseDTO.responses.Add(filteredResponse);
 
                 } catch (Exception ex)
                 {
-                    var errorMessage = $"Error retrieving cached roundtrip with iataCode: {id}";
+                    var errorMessage = $"Error retrieving cached roundtrip with uuid: {id}, exception: \n{ex}";
                     _logger.LogError(ex, errorMessage);
-                    cachedRoundTripsResponseDTO.status = OperationStatus.CreateStatusFailure(HttpStatusCode.NoContent, errorMessage);
+                    cachedRoundTripsResponseDTO.status = OperationStatus.CreateStatusFailure(HttpStatusCode.ExpectationFailed, errorMessage);
                     break;
                 }
             }
             return cachedRoundTripsResponseDTO;
-        */
-            return new CachedRoundTripsResponseDTO();
         }
     }
 
