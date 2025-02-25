@@ -30,7 +30,7 @@ namespace FlightsDiggingApp.Helpers
 
             AddHeadersToRequest(request, headers);
 
-            HttpStatusCode statusCode = HttpStatusCode.ServiceUnavailable;
+            HttpStatusCode statusCode = HttpStatusCode.ExpectationFailed;
 
             try
             {

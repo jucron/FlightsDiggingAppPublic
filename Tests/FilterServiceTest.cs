@@ -32,7 +32,7 @@ namespace Tests
             var filter = new Filter
             {
                 maxDurationHours = expectedMaxDuration,
-                maxFlights = expectedMaxFlights,
+                maxRoundTrips = expectedMaxFlights,
             };
 
             //getRoundtripsResponseDTO = _filterService.FilterFlightsFromGetRoundtripsResponseDTO(filter, getRoundtripsResponseDTO);

@@ -46,7 +46,7 @@ namespace FlightsDiggingApp.Services
                 FilterByMaxStops(filter.maxStops, filteredResponseDTO);
             }
 
-            FilterByMaxFlights(filter.maxFlights, filteredResponseDTO);
+            FilterByMaxRoundTrips(filter.maxRoundTrips, filteredResponseDTO);
 
             bool isFiltered = true;
             ApplyMetrics(filteredResponseDTO, isFiltered);
@@ -64,10 +64,10 @@ namespace FlightsDiggingApp.Services
                 responseDTO.metrics.filteredMetrics = new RoundTripMetrics.Metrics()
                 {
                     totalFlights = responseDTO.data.Count,
-                    maxHours = responseDTO.data.Any() ? responseDTO.data.Max(flight => flight.duration.hours) : 0,
-                    minHours = responseDTO.data.Any() ? responseDTO.data.Min(flight => flight.duration.hours) : 0,
-                    maxPrice = responseDTO.data.Any() ? responseDTO.data.Max(flight => flight.price.total) : 0,
-                    minPrice = responseDTO.data.Any() ? responseDTO.data.Min(flight => flight.price.total) : 0,
+                    maxHours = responseDTO.data.Any() ? responseDTO.data.Max(roundTrip => roundTrip.totalDuration.hours) : 0,
+                    minHours = responseDTO.data.Any() ? responseDTO.data.Min(roundTrip => roundTrip.totalDuration.hours) : 0,
+                    maxPrice = responseDTO.data.Any() ? responseDTO.data.Max(roundTrip => roundTrip.price.total) : 0,
+                    minPrice = responseDTO.data.Any() ? responseDTO.data.Min(roundTrip => roundTrip.price.total) : 0,
                 };
             }
             else
@@ -75,22 +75,22 @@ namespace FlightsDiggingApp.Services
                 responseDTO.metrics.originalMetrics = new RoundTripMetrics.Metrics()
                 {
                     totalFlights = responseDTO.data.Count,
-                    maxHours = responseDTO.data.Any() ? responseDTO.data.Max(flight => flight.duration.hours) : 0,
-                    minHours = responseDTO.data.Any() ? responseDTO.data.Min(flight => flight.duration.hours) : 0,
-                    maxPrice = responseDTO.data.Any() ? responseDTO.data.Max(flight => flight.price.total) : 0,
-                    minPrice = responseDTO.data.Any() ? responseDTO.data.Min(flight => flight.price.total) : 0,
+                    maxHours = responseDTO.data.Any() ? responseDTO.data.Max(roundTrip => roundTrip.totalDuration.hours) : 0,
+                    minHours = responseDTO.data.Any() ? responseDTO.data.Min(roundTrip => roundTrip.totalDuration.hours) : 0,
+                    maxPrice = responseDTO.data.Any() ? responseDTO.data.Max(roundTrip => roundTrip.price.total) : 0,
+                    minPrice = responseDTO.data.Any() ? responseDTO.data.Min(roundTrip => roundTrip.price.total) : 0,
                 };
             }
         
         }
 
-        private void FilterByMaxFlights(int maxFlights, RoundtripResponseDTO roundtripResponseDTO)
+        private void FilterByMaxRoundTrips(int maxFlights, RoundtripResponseDTO roundtripResponseDTO)
         {
             int maxFlightsCap = _amadeusApiProperties.limit_roundtrip_flights;
-            // If maxFlights is 0 or larger than the limit, set it to the limit
+            // If maxRoundTrips is 0 or larger than the limit, set it to the limit
             maxFlights = (maxFlights == 0 || maxFlights > maxFlightsCap) ? maxFlightsCap : maxFlights;
 
-            // Take only the maxFlights number and remove exceeding:
+            // Take only the maxRoundTrips number and remove exceeding:
             if (roundtripResponseDTO.data.Count > maxFlights)
             {
                 roundtripResponseDTO.data = roundtripResponseDTO.data.Take(maxFlights).ToList();

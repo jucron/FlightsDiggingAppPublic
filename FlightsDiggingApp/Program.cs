@@ -1,11 +1,13 @@
 using FlightsDiggingApp.Properties;
 using FlightsDiggingApp.Services;
+using Microsoft.Extensions.Logging.Console;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -40,9 +42,24 @@ builder.Services.AddSingleton<IApiService, AmadeusApiService>();
 builder.Services.AddSingleton<IFlightsDiggerService, FlightsDiggerService>();
 builder.Services.AddSingleton<IFilterService, FilterService>();
 
+// Configure logging using ConsoleFormatterOptions
+builder.Logging.ClearProviders(); // Remove default providers
+builder.Logging.AddConsole(options =>
+{
+    options.FormatterName = ConsoleFormatterNames.Simple; // Use "Simple" format
+});
+
+builder.Services.Configure<SimpleConsoleFormatterOptions>(options =>
+{
+    options.TimestampFormat = "yyyy-MM-dd HH:mm:ss "; // Set timestamp format
+    options.IncludeScopes = true; // Optional: Show log scopes
+});
 
 // Build App
 var app = builder.Build();
+
+// Dev tools
+app.UseDeveloperExceptionPage();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

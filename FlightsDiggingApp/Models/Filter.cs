@@ -7,7 +7,7 @@
         public int maxDurationHours { get; set; }
         public int minDurationHours { get; set; }
         public int maxStops { get; set; }
-        public int maxFlights { get; set; }
+        public int maxRoundTrips { get; set; }
         public bool isDirect { get; set; }
     }
 }

@@ -39,47 +39,95 @@ namespace FlightsDiggingApp.Mappers
             {
                 return new RoundtripResponseDTO() { status = amadeusSearchFlightsResponse?.operationStatus ?? OperationStatus.CreateStatusFailure(HttpStatusCode.ExpectationFailed, "Unknown error") };
             }
-            var response =  new RoundtripResponseDTO()
+            var response = new RoundtripResponseDTO()
             {
                 request = roundtripRequest,
                 status = amadeusSearchFlightsResponse.operationStatus,
                 dictionaries = amadeusSearchFlightsResponse.dictionaries,
                 data = []
             };
-            foreach (var flight in amadeusSearchFlightsResponse.data)
+            var link = GenerateScannerLinkByRequest(roundtripRequest);
+            foreach (var roundtrip in amadeusSearchFlightsResponse.data)
             {
-                var flightDTO = new FlightDTO()
+                // If we have two itineraries (departure & return)
+                if (roundtrip.itineraries.Count == 2)
                 {
-                    Id = flight.id,
-                    price = new() { currency = flight.price.currency, total =  double.Parse(flight.price.total, CultureInfo.InvariantCulture) },
-                    duration = ParseDuration(flight.itineraries[1].duration),
-                    stops = flight.itineraries[1].segments.Count - 1,
-                    isOneWay = flight.oneWay,
-                    numberOfBookableSeats = flight.numberOfBookableSeats,
-                    segments = flight.itineraries[1].segments,
-                    link = "todo",
-                };
-                response.data.Add(flightDTO);
+                    var roundTripDTO = new RoundTripDTO()
+                    {
+                        Id = roundtrip.id,
+                        price = new() { currency = roundtrip.price.currency, total = double.Parse(roundtrip.price.total, CultureInfo.InvariantCulture) },
+                        isOneWay = roundtrip.oneWay,
+                        source = roundtrip.source,
+                        numberOfBookableSeats = roundtrip.numberOfBookableSeats,
+                        link = link,
+                        departureFlight = new()
+                        {
+                            duration = ParseDuration(roundtrip.itineraries[0].duration),
+                            stops = roundtrip.itineraries[0].segments.Count - 1,
+                            segments = roundtrip.itineraries[0].segments,
+                        },
+                        returnFlight = new()
+                        {
+                            duration = ParseDuration(roundtrip.itineraries[1].duration),
+                            stops = roundtrip.itineraries[1].segments.Count - 1,
+                            segments = roundtrip.itineraries[1].segments,
+                        },
+                    };
+                    roundTripDTO.maxStops = Math.Max(roundTripDTO.departureFlight.stops, roundTripDTO.returnFlight.stops);
+                    roundTripDTO.totalDuration = GenerateTotalDuration(roundTripDTO);
+                    
+                    response.data.Add(roundTripDTO);
+                }
             }
             return response;
         }
-        private static FlightDTO.Duration ParseDuration(string durationString)
+
+        private static RoundTripDTO.Duration GenerateTotalDuration(RoundTripDTO roundTripDTO)
+        {
+            var totalDuration = new RoundTripDTO.Duration()
+            {
+                hours = roundTripDTO.departureFlight.duration.hours + roundTripDTO.returnFlight.duration.hours,
+                Minutes = roundTripDTO.departureFlight.duration.Minutes + roundTripDTO.returnFlight.duration.Minutes,
+            };
+            if (totalDuration.Minutes >= 60)
+            {
+                totalDuration.hours += roundTripDTO.totalDuration.Minutes / 60;
+                totalDuration.Minutes %= 60;
+            }
+            return totalDuration;
+        }
+
+        private static RoundTripDTO.Duration ParseDuration(string durationString)
         {
             if (string.IsNullOrWhiteSpace(durationString))
                 // Invalid duration string
-                return new FlightDTO.Duration { hours = 0, Minutes = 0 };
+                return new RoundTripDTO.Duration { hours = 0, Minutes = 0 };
 
             var match = Regex.Match(durationString, @"PT(?:(\d+)H)?(?:(\d+)M)?");
 
             if (!match.Success)
                 // Invalid duration format
-                return new FlightDTO.Duration { hours = 0, Minutes = 0 };
-            
-            return new FlightDTO.Duration
+                return new RoundTripDTO.Duration { hours = 0, Minutes = 0 };
+
+            return new RoundTripDTO.Duration
             {
                 hours = match.Groups[1].Success ? int.Parse(match.Groups[1].Value) : 0,
                 Minutes = match.Groups[2].Success ? int.Parse(match.Groups[2].Value) : 0
             };
         }
+
+        private static string GenerateScannerLinkByRequest(RoundtripRequest request)
+        {
+            string baseUrl = "https://www.skyscanner.com/transport/flights";
+
+            string formattedDateTo = request.to.Replace("-", "");
+            string formattedDateFrom = request.from.Replace("-", "");
+
+            string url = $"{baseUrl}/{formattedDateFrom}/{formattedDateTo}/{request.departDate}/{request.returnDate}/" +
+                         $"?adultsv2={request.adults}&childrenv2={request.children}&infants={request.infants}&cabinclass={request.travelClass}&currency={request.currency}";
+
+            return url;
+        }
+
     }
 }
