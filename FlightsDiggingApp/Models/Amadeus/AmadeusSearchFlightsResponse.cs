@@ -141,33 +141,34 @@
 
         public class Segment
         {
-            public Departure departure { get; set; }
-            public Arrival arrival { get; set; }
-            public string carrierCode { get; set; }
-            public string number { get; set; }
-            public Aircraft aircraft { get; set; }
-            public Operating operating { get; set; }
-            public string duration { get; set; }
-            public string id { get; set; }
-            public int numberOfStops { get; set; }
-            public bool blacklistedInEU { get; set; }
-        }
-
-        public class SYD
-        {
-            public string cityCode { get; set; }
-            public string countryCode { get; set; }
-        }
-
-        public class TravelerPricing
-        {
-            public string travelerId { get; set; }
-            public string fareOption { get; set; }
-            public string travelerType { get; set; }
-            public Price price { get; set; }
-            public List<FareDetailsBySegment> fareDetailsBySegment { get; set; }
-        }
-
-
+        public RoundTripDTO.Duration? durationFormatted { get; set; }
+        public Departure departure { get; set; }
+        public Arrival arrival { get; set; }
+        public string carrierCode { get; set; }
+        public string number { get; set; }
+        public Aircraft aircraft { get; set; }
+        public Operating operating { get; set; }
+        public string duration { get; set; }
+        public string id { get; set; }
+        public int numberOfStops { get; set; }
+        public bool blacklistedInEU { get; set; }
     }
+
+    public class SYD
+    {
+        public string cityCode { get; set; }
+        public string countryCode { get; set; }
+    }
+
+    public class TravelerPricing
+    {
+        public string travelerId { get; set; }
+        public string fareOption { get; set; }
+        public string travelerType { get; set; }
+        public Price price { get; set; }
+        public List<FareDetailsBySegment> fareDetailsBySegment { get; set; }
+    }
+
+
+}
 }

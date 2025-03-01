@@ -19,7 +19,7 @@ namespace FlightsDiggingApp.Models
         public class Duration
         {
             public int hours { get; set; }
-            public int Minutes { get; set; }
+            public int minutes { get; set; }
         }
 
         public class Price

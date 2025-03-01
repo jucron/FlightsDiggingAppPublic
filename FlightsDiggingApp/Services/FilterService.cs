@@ -99,17 +99,17 @@ namespace FlightsDiggingApp.Services
 
         private void FilterByMaxStops(int maxStops, RoundtripResponseDTO roundtripResponseDTO)
         {
-            roundtripResponseDTO.data = roundtripResponseDTO.data.Where(flight => flight.stops <= maxStops).ToList();
+            roundtripResponseDTO.data = roundtripResponseDTO.data.Where(roundTrip => roundTrip.maxStops <= maxStops).ToList();
         }
 
         private void FilterByMaxDuration(int maxDuration, RoundtripResponseDTO roundtripResponseDTO)
         {
-            roundtripResponseDTO.data = roundtripResponseDTO.data.Where(flight => flight.duration.hours <= maxDuration).ToList();
+            roundtripResponseDTO.data = roundtripResponseDTO.data.Where(flight => flight.totalDuration.hours <= maxDuration).ToList();
         }
 
         private void FilterByMinDuration(int minDuration, RoundtripResponseDTO roundtripResponseDTO)
         {
-            roundtripResponseDTO.data = roundtripResponseDTO.data.Where(flight => flight.duration.hours >= minDuration).ToList();
+            roundtripResponseDTO.data = roundtripResponseDTO.data.Where(flight => flight.totalDuration.hours >= minDuration).ToList();
         }
 
         private void FilterByMinPrice(double minPrice, RoundtripResponseDTO roundtripResponseDTO)

@@ -75,6 +75,9 @@ namespace FlightsDiggingApp.Mappers
                     };
                     roundTripDTO.maxStops = Math.Max(roundTripDTO.departureFlight.stops, roundTripDTO.returnFlight.stops);
                     roundTripDTO.totalDuration = GenerateTotalDuration(roundTripDTO);
+
+                    AddFormattedDurationForSegments(roundTripDTO.departureFlight.segments);
+                    AddFormattedDurationForSegments(roundTripDTO.returnFlight.segments);
                     
                     response.data.Add(roundTripDTO);
                 }
@@ -82,17 +85,28 @@ namespace FlightsDiggingApp.Mappers
             return response;
         }
 
+        private static void AddFormattedDurationForSegments(List<AmadeusSearchFlightsResponse.Segment> segments)
+        {
+            foreach (var segment in  segments)
+            {
+                if (segment.duration != null)
+                {
+                    segment.durationFormatted = ParseDuration(segment.duration);
+                }
+            }
+        }
+
         private static RoundTripDTO.Duration GenerateTotalDuration(RoundTripDTO roundTripDTO)
         {
             var totalDuration = new RoundTripDTO.Duration()
             {
                 hours = roundTripDTO.departureFlight.duration.hours + roundTripDTO.returnFlight.duration.hours,
-                Minutes = roundTripDTO.departureFlight.duration.Minutes + roundTripDTO.returnFlight.duration.Minutes,
+                minutes = roundTripDTO.departureFlight.duration.minutes + roundTripDTO.returnFlight.duration.minutes,
             };
-            if (totalDuration.Minutes >= 60)
+            if (totalDuration.minutes >= 60)
             {
-                totalDuration.hours += roundTripDTO.totalDuration.Minutes / 60;
-                totalDuration.Minutes %= 60;
+                totalDuration.hours += totalDuration.minutes / 60;
+                totalDuration.minutes %= 60;
             }
             return totalDuration;
         }
@@ -101,18 +115,18 @@ namespace FlightsDiggingApp.Mappers
         {
             if (string.IsNullOrWhiteSpace(durationString))
                 // Invalid duration string
-                return new RoundTripDTO.Duration { hours = 0, Minutes = 0 };
+                return new RoundTripDTO.Duration { hours = 0, minutes = 0 };
 
             var match = Regex.Match(durationString, @"PT(?:(\d+)H)?(?:(\d+)M)?");
 
             if (!match.Success)
                 // Invalid duration format
-                return new RoundTripDTO.Duration { hours = 0, Minutes = 0 };
+                return new RoundTripDTO.Duration { hours = 0, minutes = 0 };
 
             return new RoundTripDTO.Duration
             {
                 hours = match.Groups[1].Success ? int.Parse(match.Groups[1].Value) : 0,
-                Minutes = match.Groups[2].Success ? int.Parse(match.Groups[2].Value) : 0
+                minutes = match.Groups[2].Success ? int.Parse(match.Groups[2].Value) : 0
             };
         }
 
