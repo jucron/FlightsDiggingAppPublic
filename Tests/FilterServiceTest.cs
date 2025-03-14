@@ -1,8 +1,10 @@
 
 using System.Text.Json;
 using FlightsDiggingApp.Models;
+using FlightsDiggingApp.Properties;
 using FlightsDiggingApp.Services;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Xunit.Abstractions;
 
 namespace Tests
@@ -11,10 +13,11 @@ namespace Tests
     {
         private readonly ILogger<FilterService> _logger;
         private readonly FilterService _filterService;
+        IOptions<AmadeusApiProperties> _amadeusApiProperties;
         public FilterServiceTest(ITestOutputHelper output)
         {
             _logger = new Logger<FilterService>(new LoggerFactory());
-            _filterService = new FilterService(_logger);
+            _filterService = new FilterService(_logger, null);
         }
 
         [Fact]

@@ -33,10 +33,6 @@ namespace FlightsDiggingApp.Services
             {
                 FilterByMinPrice(filter.minPrice, filteredResponseDTO);
             }
-            if (filter.minDurationHours != 0)
-            {
-                FilterByMinDuration(filter.minDurationHours, filteredResponseDTO);
-            }
             if (filter.maxDurationHours != 0)
             {
                 FilterByMaxDuration(filter.maxDurationHours, filteredResponseDTO);
@@ -105,11 +101,6 @@ namespace FlightsDiggingApp.Services
         private void FilterByMaxDuration(int maxDuration, RoundtripResponseDTO roundtripResponseDTO)
         {
             roundtripResponseDTO.data = roundtripResponseDTO.data.Where(flight => flight.totalDuration.hours <= maxDuration).ToList();
-        }
-
-        private void FilterByMinDuration(int minDuration, RoundtripResponseDTO roundtripResponseDTO)
-        {
-            roundtripResponseDTO.data = roundtripResponseDTO.data.Where(flight => flight.totalDuration.hours >= minDuration).ToList();
         }
 
         private void FilterByMinPrice(double minPrice, RoundtripResponseDTO roundtripResponseDTO)
