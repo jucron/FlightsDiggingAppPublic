@@ -49,17 +49,18 @@ namespace FlightsDiggingApp.Controllers
             return _flightsDiggerService.GetAirports(query);
         }
 
+        [HttpPost("singleroundtrip")]
+        public RoundtripResponseDTO SingleRoundTrip([FromBody] RoundtripRequest request)
+        {
+            return _flightsDiggerService.GetRoundTrip(request);
+        }
+
+#if DEBUG
         // TESTING ENDPOINTS - DEACTIVATE IN PROD
         [HttpGet("authtoken")]
         public string GetAuthToken()
         {
             return _flightsDiggerService.GetAuthToken();
-        }
-
-        [HttpPost("singleroundtrip")]
-        public RoundtripResponseDTO SingleRoundTrip([FromBody] RoundtripRequest request)
-        {
-            return _flightsDiggerService.GetRoundTrip(request);
         }
 
         [HttpPost("cachedroundtrips")]
@@ -68,4 +69,6 @@ namespace FlightsDiggingApp.Controllers
             return _flightsDiggerService.GetCachedRoundTrips(request);
         }
     }
+#endif
+
 }
