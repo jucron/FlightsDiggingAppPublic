@@ -62,23 +62,27 @@ namespace FlightsDiggingApp.Services
 
         private void FilterByDepHourReturn(MinMaxHours departureHourReturn, RoundtripResponseDTO filteredResponseDTO)
         {
+            int originalMaxHour = departureHourReturn.max;
+            int maxHour = (originalMaxHour > 0) ? originalMaxHour : 24;
             filteredResponseDTO.data = [.. filteredResponseDTO.data.Where(roundTrip =>
             {
                 var departureDateTime = roundTrip.returnFlight.segments[0].departure.at;
                 var departureHour = departureDateTime.Hour;
 
-                return departureHour >= departureHourReturn.min && departureHour <= departureHourReturn.max;
+                return departureHour >= departureHourReturn.min && departureHour <= maxHour;
             })];
         }
 
         private void FilterByDepHourOrigin(MinMaxHours departureHourOrigin, RoundtripResponseDTO filteredResponseDTO)
         {
+            int originalMaxHour = departureHourOrigin.max;
+            int maxHour = (originalMaxHour > 0) ? originalMaxHour : 24;
             filteredResponseDTO.data = [.. filteredResponseDTO.data.Where(roundTrip =>
             {
                 var departureDateTime = roundTrip.departureFlight.segments[0].departure.at;
                 var departureHour = departureDateTime.Hour;
 
-                return departureHour >= departureHourOrigin.min && departureHour <= departureHourOrigin.max;
+                return departureHour >= departureHourOrigin.min && departureHour <= maxHour;
             })];
         }
 
@@ -96,6 +100,7 @@ namespace FlightsDiggingApp.Services
                 else
                 {
                     responseDTO.metrics.originalMetrics = CalculateMetrics(responseDTO.data);
+                    responseDTO.metrics.filteredMetrics = responseDTO.metrics.originalMetrics;
                 }
             }
             else
@@ -103,10 +108,10 @@ namespace FlightsDiggingApp.Services
                 responseDTO.metrics.filteredMetrics = new RoundTripMetrics.Metrics()
                 {
                     totalFlights = 0,
-                    totalDuration = { min = 0, max = 0 },
+                    totalDuration = new MinMaxHours{ min = 0, max = 0 },
                     maxPrice = 0,
                     minPrice = 0,
-                    departureHourOrigin = { min = 0, max = 0 },
+                    departureHourOrigin = new MinMaxHours{ min = 0, max = 0 },
                 };
             }
         }
@@ -116,13 +121,15 @@ namespace FlightsDiggingApp.Services
             return new RoundTripMetrics.Metrics()
             {
                 totalFlights = data.Count,
-                totalDuration =
+                totalDuration = new MinMaxHours()
                         {
+                    //todo: check what is happening to duration hours wrong!
                             min = data.Min(roundTrip => roundTrip.totalDuration.hours),
                             max = data.Max(roundTrip => roundTrip.totalDuration.hours),
                         },
                 maxPrice = data.Max(roundTrip => roundTrip.price.total),
                 minPrice = data.Min(roundTrip => roundTrip.price.total),
+                maxStops = data.Max(roundTrip => roundTrip.maxStops),
                 departureHourOrigin = new MinMaxHours
                 {
                     min = data.Min(roundTrip => roundTrip.departureFlight.segments[0].departure.at.Hour),
