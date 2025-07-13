@@ -1,6 +1,4 @@
-﻿using FlightsDiggingApp.Models.Amadeus;
-using static FlightsDiggingApp.Models.Amadeus.AmadeusSearchFlightsResponse;
-
+﻿
 namespace FlightsDiggingApp.Models
 {
     public class RoundTripDTO

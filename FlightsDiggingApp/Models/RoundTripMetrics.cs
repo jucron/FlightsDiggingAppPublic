@@ -10,8 +10,9 @@
             public int totalFlights { get; set; }
             public double maxPrice { get; set; }
             public double minPrice { get; set; }
-            public int maxHours { get; set; }
-            public int minHours { get; set; }
+            public MinMaxHours totalDuration { get; set; }
+            public MinMaxHours departureHourOrigin { get; set; }
+            public MinMaxHours departureHourReturn { get; set; }
         }
     }
 }

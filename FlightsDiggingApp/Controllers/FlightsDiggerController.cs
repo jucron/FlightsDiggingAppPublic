@@ -55,6 +55,12 @@ namespace FlightsDiggingApp.Controllers
             return _flightsDiggerService.GetRoundTrip(request);
         }
 
+        [HttpPost("cachedroundtrips")]
+        public CachedRoundTripsResponseDTO CachedRoundTrips([FromBody] CachedRoundTripsRequest request)
+        {
+            return _flightsDiggerService.GetCachedRoundTrips(request);
+        }
+
 #if DEBUG
         // TESTING ENDPOINTS - DEACTIVATE IN PROD
         [HttpGet("authtoken")]
@@ -62,12 +68,7 @@ namespace FlightsDiggingApp.Controllers
         {
             return _flightsDiggerService.GetAuthToken();
         }
-
-        [HttpPost("cachedroundtrips")]
-        public CachedRoundTripsResponseDTO CachedRoundTrips([FromBody] CachedRoundTripsRequest request)
-        {
-            return _flightsDiggerService.GetCachedRoundTrips(request);
-        }
+       
     }
 #endif
 

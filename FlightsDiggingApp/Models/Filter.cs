@@ -7,7 +7,8 @@
         public int maxDurationHours { get; set; }
         public int maxStops { get; set; }
         public int maxRoundTrips { get; set; }
-        public string? departureTimeOrigin { get; set; }
-        public string? departureTimeReturn { get; set; }
+        public MinMaxHours? departureHourOrigin { get; set; }
+        public MinMaxHours? departureHourReturn { get; set; }
+        
     }
 }

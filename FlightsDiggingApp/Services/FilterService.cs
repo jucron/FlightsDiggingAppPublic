@@ -1,8 +1,9 @@
-﻿using System.Net;
+using System.Net;
 using FlightsDiggingApp.Mappers;
 using FlightsDiggingApp.Models;
 using FlightsDiggingApp.Properties;
 using Microsoft.Extensions.Options;
+using static FlightsDiggingApp.Models.Filter;
 
 namespace FlightsDiggingApp.Services
 {
@@ -41,6 +42,14 @@ namespace FlightsDiggingApp.Services
             {
                 FilterByMaxStops(filter.maxStops, filteredResponseDTO);
             }
+            if (filter.departureHourOrigin != null)
+            {
+                FilterByDepHourOrigin(filter.departureHourOrigin, filteredResponseDTO);
+            }
+            if (filter.departureHourReturn != null)
+            {
+                FilterByDepHourReturn(filter.departureHourReturn, filteredResponseDTO);
+            }
 
             FilterByMaxRoundTrips(filter.maxRoundTrips, filteredResponseDTO);
 
@@ -51,33 +60,80 @@ namespace FlightsDiggingApp.Services
             return filteredResponseDTO;
         }
 
+        private void FilterByDepHourReturn(MinMaxHours departureHourReturn, RoundtripResponseDTO filteredResponseDTO)
+        {
+            filteredResponseDTO.data = [.. filteredResponseDTO.data.Where(roundTrip =>
+            {
+                var departureDateTime = roundTrip.returnFlight.segments[0].departure.at;
+                var departureHour = departureDateTime.Hour;
+
+                return departureHour >= departureHourReturn.min && departureHour <= departureHourReturn.max;
+            })];
+        }
+
+        private void FilterByDepHourOrigin(MinMaxHours departureHourOrigin, RoundtripResponseDTO filteredResponseDTO)
+        {
+            filteredResponseDTO.data = [.. filteredResponseDTO.data.Where(roundTrip =>
+            {
+                var departureDateTime = roundTrip.departureFlight.segments[0].departure.at;
+                var departureHour = departureDateTime.Hour;
+
+                return departureHour >= departureHourOrigin.min && departureHour <= departureHourOrigin.max;
+            })];
+        }
+
         public void ApplyMetrics(RoundtripResponseDTO responseDTO, bool isFiltered = false)
         {
             responseDTO.metrics ??= new RoundTripMetrics();
+            var hasData = responseDTO.data.Count > 0;
 
-            if (isFiltered)
+            if (hasData)
             {
-                responseDTO.metrics.filteredMetrics = new RoundTripMetrics.Metrics()
+                if (isFiltered)
                 {
-                    totalFlights = responseDTO.data.Count,
-                    maxHours = responseDTO.data.Any() ? responseDTO.data.Max(roundTrip => roundTrip.totalDuration.hours) : 0,
-                    minHours = responseDTO.data.Any() ? responseDTO.data.Min(roundTrip => roundTrip.totalDuration.hours) : 0,
-                    maxPrice = responseDTO.data.Any() ? responseDTO.data.Max(roundTrip => roundTrip.price.total) : 0,
-                    minPrice = responseDTO.data.Any() ? responseDTO.data.Min(roundTrip => roundTrip.price.total) : 0,
-                };
+                    responseDTO.metrics.filteredMetrics = CalculateMetrics(responseDTO.data);
+                }
+                else
+                {
+                    responseDTO.metrics.originalMetrics = CalculateMetrics(responseDTO.data);
+                }
             }
             else
             {
-                responseDTO.metrics.originalMetrics = new RoundTripMetrics.Metrics()
+                responseDTO.metrics.filteredMetrics = new RoundTripMetrics.Metrics()
                 {
-                    totalFlights = responseDTO.data.Count,
-                    maxHours = responseDTO.data.Any() ? responseDTO.data.Max(roundTrip => roundTrip.totalDuration.hours) : 0,
-                    minHours = responseDTO.data.Any() ? responseDTO.data.Min(roundTrip => roundTrip.totalDuration.hours) : 0,
-                    maxPrice = responseDTO.data.Any() ? responseDTO.data.Max(roundTrip => roundTrip.price.total) : 0,
-                    minPrice = responseDTO.data.Any() ? responseDTO.data.Min(roundTrip => roundTrip.price.total) : 0,
+                    totalFlights = 0,
+                    totalDuration = { min = 0, max = 0 },
+                    maxPrice = 0,
+                    minPrice = 0,
+                    departureHourOrigin = { min = 0, max = 0 },
                 };
             }
-        
+        }
+
+        private static RoundTripMetrics.Metrics CalculateMetrics(List<RoundTripDTO> data)
+        {
+            return new RoundTripMetrics.Metrics()
+            {
+                totalFlights = data.Count,
+                totalDuration =
+                        {
+                            min = data.Min(roundTrip => roundTrip.totalDuration.hours),
+                            max = data.Max(roundTrip => roundTrip.totalDuration.hours),
+                        },
+                maxPrice = data.Max(roundTrip => roundTrip.price.total),
+                minPrice = data.Min(roundTrip => roundTrip.price.total),
+                departureHourOrigin = new MinMaxHours
+                {
+                    min = data.Min(roundTrip => roundTrip.departureFlight.segments[0].departure.at.Hour),
+                    max = data.Max(roundTrip => roundTrip.departureFlight.segments[0].departure.at.Hour)
+                },
+                departureHourReturn = new MinMaxHours
+                {
+                    min = data.Min(roundTrip => roundTrip.returnFlight.segments[0].departure.at.Hour),
+                    max = data.Max(roundTrip => roundTrip.returnFlight.segments[0].departure.at.Hour)
+                }
+            };
         }
 
         private void FilterByMaxRoundTrips(int maxFlights, RoundtripResponseDTO roundtripResponseDTO)
