@@ -52,18 +52,19 @@ namespace FlightsDiggingApp.Services
             // Map response to DTO
             var responseDTO = RoundtripMapper.MapGetRoundtripResponseToDTO(response, request);
             */
+
+            // Only for testing!
             string json = File.ReadAllText("Properties\\ExampleResponseDTO.json");
             var responseDTO = JsonSerializer.Deserialize<RoundtripResponseDTO>(json);
             
             // If response have error, no need to store in cache or apply filter
-            if (responseDTO == null)
-            if (responseDTO.status.hasError) { return responseDTO; }
+            if (responseDTO == null || responseDTO.status.hasError) { return responseDTO; }
 
             // Generate UUID
             responseDTO.id = _cacheService.GenerateUUID();
 
-            // Generate original Metrics
-            _filterService.ApplyMetrics(responseDTO);
+            // Generate original Metrics //todo: reactivate this when using api
+            //_filterService.ApplyMetrics(responseDTO);
 
             // Persist in cache for future filterings
             _cacheService.StoreRoundtripResponseDTO(responseDTO);

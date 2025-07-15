@@ -74,11 +74,11 @@ namespace FlightsDiggingApp.Mappers
                         },
                     };
                     roundTripDTO.maxStops = Math.Max(roundTripDTO.departureFlight.stops, roundTripDTO.returnFlight.stops);
-                    roundTripDTO.totalDuration = GenerateTotalDuration(roundTripDTO);
+                    roundTripDTO.durationStatsMinutes = GenerateDurationStatsMinutes(roundTripDTO);
 
                     AddFormattedDurationForSegments(roundTripDTO.departureFlight.segments);
                     AddFormattedDurationForSegments(roundTripDTO.returnFlight.segments);
-                    
+
                     response.data.Add(roundTripDTO);
                 }
             }
@@ -96,19 +96,24 @@ namespace FlightsDiggingApp.Mappers
             }
         }
 
-        private static RoundTripDTO.Duration GenerateTotalDuration(RoundTripDTO roundTripDTO)
+        private static MinMax<int> GenerateDurationStatsMinutes(RoundTripDTO roundTripDTO)
         {
-            var totalDuration = new RoundTripDTO.Duration()
+            if (roundTripDTO?.departureFlight?.duration == null || roundTripDTO?.returnFlight?.duration == null)
             {
-                hours = roundTripDTO.departureFlight.duration.hours + roundTripDTO.returnFlight.duration.hours,
-                minutes = roundTripDTO.departureFlight.duration.minutes + roundTripDTO.returnFlight.duration.minutes,
-            };
-            if (totalDuration.minutes >= 60)
-            {
-                totalDuration.hours += totalDuration.minutes / 60;
-                totalDuration.minutes %= 60;
+                return new MinMax<int> { min = 0, max = 0 }; 
             }
-            return totalDuration;
+
+            int totalMinutesDep = roundTripDTO.departureFlight.duration.hours * 60 + roundTripDTO.departureFlight.duration.minutes;
+            int totalMinutesRet = roundTripDTO.returnFlight.duration.hours * 60 + roundTripDTO.returnFlight.duration.minutes;
+
+            int minMinutes = Math.Min(totalMinutesDep, totalMinutesRet);
+            int maxMinutes = Math.Max(totalMinutesDep, totalMinutesRet);
+
+            return new MinMax<int>
+            {
+                min = minMinutes,
+                max = maxMinutes
+            };
         }
 
         private static RoundTripDTO.Duration ParseDuration(string durationString)

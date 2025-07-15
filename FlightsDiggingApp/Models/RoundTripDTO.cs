@@ -9,16 +9,17 @@ namespace FlightsDiggingApp.Models
         public bool isOneWay { set; get; }
         public int numberOfBookableSeats { set; get; }
         public Price price { set; get; }
-        public Duration totalDuration { set; get; }
+        public MinMax<int> durationStatsMinutes { set; get; }
         public int maxStops { set; get; }
         public FlightDTO departureFlight { set; get; }
         public FlightDTO returnFlight { set; get; }
 
         public class Duration
         {
-            public int hours { get; set; }
-            public int minutes { get; set; }
+            public int hours { set; get; }
+            public int minutes { set; get; }
         }
+
 
         public class Price
         {

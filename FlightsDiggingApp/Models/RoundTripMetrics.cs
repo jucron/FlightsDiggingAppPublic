@@ -10,10 +10,10 @@
             public int totalFlights { get; set; }
             public double maxPrice { get; set; }
             public double minPrice { get; set; }
-            public int maxStops { get; set; } //todo
-            public MinMaxHours totalDuration { get; set; }
-            public MinMaxHours departureHourOrigin { get; set; }
-            public MinMaxHours departureHourReturn { get; set; }
+            public int maxStops { get; set; } 
+            public MinMax<int> flightsDurationMinutes { get; set; }
+            public MinMax<int> departureTimeOriginMinutes { get; set; }
+            public MinMax<int> departureTimeReturnMinutes { get; set; }
         }
     }
 }

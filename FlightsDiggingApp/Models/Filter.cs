@@ -4,11 +4,11 @@
     {
         public double maxPrice { get; set; }
         public double minPrice { get; set; } = 0;
-        public int maxDurationHours { get; set; }
+        public int maxDurationMinutes { get; set; }
         public int maxStops { get; set; }
         public int maxRoundTrips { get; set; }
-        public MinMaxHours? departureHourOrigin { get; set; }
-        public MinMaxHours? departureHourReturn { get; set; }
+        public MinMax<int> departureTimeOriginMinutes { get; set; }
+        public MinMax<int> departureTimeReturnMinutes { get; set; }
         
     }
 }

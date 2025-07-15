@@ -34,7 +34,7 @@ namespace Tests
 
             var filter = new Filter
             {
-                maxDurationHours = expectedMaxDuration,
+                maxDurationMinutes = expectedMaxDuration,
                 maxRoundTrips = expectedMaxFlights,
             };
 
