@@ -2,7 +2,7 @@
 using System.Text.Json;
 using FlightsDiggingApp.Models;
 using FlightsDiggingApp.Properties;
-using FlightsDiggingApp.Services;
+using FlightsDiggingApp.Services.Filter;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Xunit.Abstractions;

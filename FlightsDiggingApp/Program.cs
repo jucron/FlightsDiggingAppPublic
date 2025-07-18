@@ -33,14 +33,14 @@ if (app.Environment.IsDevelopment())
 
 app.UseRouting();              // Enable routing for controllers
 
-//app.UseCors("AllowAngular"); // Apply CORS policy
-app.UseCors("AllowAll");       // Apply CORS policy
+//app.UseCors("AllowAngular"); // ApplyFilter CORS policy
+app.UseCors("AllowAll");       // ApplyFilter CORS policy
 
 app.UseWebSockets();           // Enable WebSocket support before routing
 
 app.UseHttpsRedirection();     // Redirect HTTP to HTTPS (optional)
 
-app.UseAuthorization();        // Optional: Apply Authorization (if necessary)
+app.UseAuthorization();        // Optional: ApplyFilter Authorization (if necessary)
 
 app.MapControllers();           // Map controllers
 

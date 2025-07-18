@@ -9,6 +9,18 @@
         public int maxRoundTrips { get; set; }
         public MinMax<int> departureTimeOriginMinutes { get; set; }
         public MinMax<int> departureTimeReturnMinutes { get; set; }
-        
+        public FilterType selectedFilter { get; set; }
+
+    }
+    public enum FilterType
+    {
+        None,
+        MaxPrice,
+        MinPrice,
+        Duration,
+        Stops,
+        RoundTripsMax,
+        DepartureTimeOriginMinutes,
+        DepartureTimeReturnMinutes
     }
 }

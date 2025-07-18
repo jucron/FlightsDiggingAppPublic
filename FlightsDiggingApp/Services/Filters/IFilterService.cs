@@ -1,6 +1,6 @@
 ﻿using FlightsDiggingApp.Models;
 
-namespace FlightsDiggingApp.Services
+namespace FlightsDiggingApp.Services.Filters
 {
     public interface IFilterService
     {

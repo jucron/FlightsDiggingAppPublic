@@ -6,6 +6,7 @@ using FlightsDiggingApp.Mappers;
 using Microsoft.Extensions.Logging;
 using FlightsDiggingApp.Models.RapidApi;
 using System.Net;
+using FlightsDiggingApp.Services.Filters;
 
 namespace FlightsDiggingApp.Services
 {
@@ -63,13 +64,13 @@ namespace FlightsDiggingApp.Services
             // Generate UUID
             responseDTO.id = _cacheService.GenerateUUID();
 
-            // Generate original Metrics //todo: reactivate this when using api
-            //_filterService.ApplyMetrics(responseDTO);
+            // Generate original Metrics
+            _filterService.ApplyMetrics(responseDTO);
 
             // Persist in cache for future filterings
             _cacheService.StoreRoundtripResponseDTO(responseDTO);
 
-            // Apply filter the DTO before sending it to front
+            // ApplyFilter filter the DTO before sending it to front
             RoundtripResponseDTO filteredResponseDTO = _filterService.FilterRoundtripResponseDTO(request.filter, responseDTO);
 
             // Return filtered results
@@ -182,7 +183,7 @@ namespace FlightsDiggingApp.Services
                 // Persist in cache for future filterings
                 _cacheService.StoreGetRoundtripsResponseDTO(getRoundtripsResponseDTO);
 
-                // Apply filter the DTO before sending it to front
+                // ApplyFilter filter the DTO before sending it to front
                 RoundtripsResponseDTO filteredResponseDTO = _filterService.FilterFlightsFromGetRoundtripsResponseDTO(requestCopy.filter,getRoundtripsResponseDTO);
 
                 // Serialize response

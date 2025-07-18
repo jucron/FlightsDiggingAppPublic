@@ -1,7 +1,9 @@
 ﻿
 
+using System.Text.Json.Serialization;
 using FlightsDiggingApp.Properties;
 using FlightsDiggingApp.Services;
+using FlightsDiggingApp.Services.Filters;
 using Microsoft.Extensions.Logging.Console;
 
 namespace FlightsDiggingApp
@@ -10,8 +12,12 @@ namespace FlightsDiggingApp
     {
         internal static void AddControllers(WebApplicationBuilder builder)
         {
-            // Add services to the container.
-            builder.Services.AddControllers();
+            // Add controllers to the container.
+            builder.Services.AddControllers()
+                .AddJsonOptions(opt =>
+                    {
+                        opt.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                    });
         }
         internal static void AddPropertiesDependencies(WebApplicationBuilder builder)
         {
