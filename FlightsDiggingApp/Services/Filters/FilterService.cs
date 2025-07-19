@@ -28,12 +28,18 @@ namespace FlightsDiggingApp.Services.Filters
             if (filter == null)
                 return filteredResponseDTO;
 
-            // ApplyFilter selected field first if any
-            FilterRule? selectedRule = _rules
-                .Where(r => r.Type == filter.selectedFilter && r.Condition(filter))
-                .FirstOrDefault();
+            if (filter.selectedFilter != FilterType.None)
+            {
+                FilterRule? selectedRule = _rules
+                    .Where(r => r.Type == filter.selectedFilter && r.Condition(filter))
+                    .FirstOrDefault();
 
-            selectedRule?.ApplyFilter(filter, filteredResponseDTO);
+                // ApplyFilter selected field first if any
+                selectedRule?.ApplyFilter(filter, filteredResponseDTO);
+
+                // Order by selected type before reduzing size
+                selectedRule?.OrderBySelectedType(filteredResponseDTO);
+            }
 
             // ApplyFilter remaining filters in priority order, excluding the selected one
             // Filters are fixed within the new limits after priority filtering
@@ -45,9 +51,11 @@ namespace FlightsDiggingApp.Services.Filters
                 rule.ApplyFilter(filter, filteredResponseDTO);
             }
 
-            selectedRule?.OrderBySelectedType(filteredResponseDTO);
-
+            // Reducing data size
             FilterOperator.FilterByMaxRoundTrips(filter.maxRoundTrips, _maxRoundTrips, filteredResponseDTO);
+
+            // Order from min to max price before sending to frond
+            FilterOrdenator.OrderByMinPrice(filteredResponseDTO);
 
             bool isFiltered = true;
             ApplyMetrics(filteredResponseDTO, isFiltered);
