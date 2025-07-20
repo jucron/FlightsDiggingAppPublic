@@ -46,7 +46,7 @@ namespace FlightsDiggingApp.Services.Filters
                 {
                     Type = FilterType.Stops,
                     Priority = 3,
-                    Condition = f => f.maxStops > 0,
+                    Condition = f => true,
                     ApplyFilter = (f, dto) => FilterOperator.FilterByMaxStops(f.maxStops, dto),
                     FixFilterRange = (f, dto) => FilterOperator.FixFilterRangeMaxStops(f, dto),
                     OrderBySelectedType = (dto) => FilterOrdenator.OrderByMaxStops(dto)

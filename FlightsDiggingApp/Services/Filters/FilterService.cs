@@ -28,34 +28,44 @@ namespace FlightsDiggingApp.Services.Filters
             if (filter == null)
                 return filteredResponseDTO;
 
+            static bool hasAnyData(RoundtripResponseDTO rt) => rt?.data?.Count > 0;
+
             if (filter.selectedFilter != FilterType.None)
             {
                 FilterRule? selectedRule = _rules
-                    .Where(r => r.Type == filter.selectedFilter && r.Condition(filter))
-                    .FirstOrDefault();
+                    .FirstOrDefault(r => r.Type == filter.selectedFilter && r.Condition(filter));
 
-                // ApplyFilter selected field first if any
-                selectedRule?.ApplyFilter(filter, filteredResponseDTO);
+                if (hasAnyData(filteredResponseDTO))
+                {
+                    // ApplyFilter selected field first if any
+                    selectedRule?.ApplyFilter(filter, filteredResponseDTO);
 
-                // Order by selected type before reduzing size
-                selectedRule?.OrderBySelectedType(filteredResponseDTO);
+                    // Order by selected type before reduzing size
+                    selectedRule?.OrderBySelectedType(filteredResponseDTO);
+                }
             }
 
+            
             // ApplyFilter remaining filters in priority order, excluding the selected one
             // Filters are fixed within the new limits after priority filtering
             foreach (var rule in _rules
                 .Where(r => r.Type != filter.selectedFilter && r.Condition(filter))
                 .OrderBy(r => r.Priority))
             {
+                if (!hasAnyData(filteredResponseDTO)) { break; }
+
                 rule.FixFilterRange(filter, filteredResponseDTO);
                 rule.ApplyFilter(filter, filteredResponseDTO);
             }
 
-            // Reducing data size
-            FilterOperator.FilterByMaxRoundTrips(filter.maxRoundTrips, _maxRoundTrips, filteredResponseDTO);
+            if (hasAnyData(filteredResponseDTO))
+            {
+                // Reducing data size
+                FilterOperator.FilterByMaxRoundTrips(filter.maxRoundTrips, _maxRoundTrips, filteredResponseDTO);
 
-            // Order from min to max price before sending to frond
-            FilterOrdenator.OrderByMinPrice(filteredResponseDTO);
+                // Order from min to max price before sending to frond
+                FilterOrdenator.OrderByMinPrice(filteredResponseDTO);
+            }
 
             bool isFiltered = true;
             ApplyMetrics(filteredResponseDTO, isFiltered);

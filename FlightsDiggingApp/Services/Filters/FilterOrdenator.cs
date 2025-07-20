@@ -17,7 +17,7 @@ namespace FlightsDiggingApp.Services.Filters
         internal static void OrderByMaxDuration(RoundtripResponseDTO dto)
         {
             if (dto?.data == null) return;
-            dto.data = dto.data.OrderBy(x => x.durationStatsMinutes).ToList();
+            dto.data = dto.data.OrderBy(x => x.durationStatsMinutes.max).ToList();
         }
         internal static void OrderByMaxStops(RoundtripResponseDTO dto)
         {
