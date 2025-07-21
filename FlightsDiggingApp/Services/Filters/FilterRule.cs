@@ -1,4 +1,5 @@
 ﻿using FlightsDiggingApp.Models;
+using FlightsDiggingApp.Services.Filters.Helpers;
 
 namespace FlightsDiggingApp.Services.Filters
 {
@@ -11,7 +12,6 @@ namespace FlightsDiggingApp.Services.Filters
         public Action<RoundtripResponseDTO> OrderBySelectedType { get; set; }
         public int Priority { get; set; }
 
-        private static bool IsMinMaxRelevant(MinMax<int> minMax) => minMax.min > 0 || minMax.max > 0;
         public static List<FilterRule> BuildRules()
         {
             return [
@@ -21,17 +21,8 @@ namespace FlightsDiggingApp.Services.Filters
                     Priority = 1,
                     Condition = f => f.maxPrice > 0,
                     ApplyFilter = (f, dto) => FilterOperator.FilterByMaxPrice(f.maxPrice, dto),
-                    FixFilterRange = (f, dto) => FilterOperator.FixFilterRangeMaxPrice(f, dto),
+                    FixFilterRange = (f, dto) => FilterFixer.FixFilterRangeMaxPrice(f, dto),
                     OrderBySelectedType = (dto) => FilterOrdenator.OrderByMaxPrice(dto)
-                },
-                new()
-                {
-                    Type = FilterType.MinPrice,
-                    Priority = 5,
-                    Condition = f => f.minPrice > 0,
-                    ApplyFilter = (f, dto) => FilterOperator.FilterByMinPrice(f.minPrice, dto),
-                    FixFilterRange = (f, dto) => FilterOperator.FixFilterRangeMinPrice(f, dto),
-                    OrderBySelectedType = (dto) => FilterOrdenator.OrderByMinPrice(dto)
                 },
                 new()
                 {
@@ -39,7 +30,7 @@ namespace FlightsDiggingApp.Services.Filters
                     Priority = 2,
                     Condition = f => f.maxDurationMinutes > 0,
                     ApplyFilter = (f, dto) => FilterOperator.FilterByMaxDuration(f.maxDurationMinutes, dto),
-                    FixFilterRange = (f, dto) => FilterOperator.FixFilterRangeMaxDuration(f, dto),
+                    FixFilterRange = (f, dto) => FilterFixer.FixFilterRangeMaxDuration(f, dto),
                     OrderBySelectedType = (dto) => FilterOrdenator.OrderByMaxDuration(dto)
                 },
                 new()
@@ -48,25 +39,43 @@ namespace FlightsDiggingApp.Services.Filters
                     Priority = 3,
                     Condition = f => true,
                     ApplyFilter = (f, dto) => FilterOperator.FilterByMaxStops(f.maxStops, dto),
-                    FixFilterRange = (f, dto) => FilterOperator.FixFilterRangeMaxStops(f, dto),
+                    FixFilterRange = (f, dto) => FilterFixer.FixFilterRangeMaxStops(f, dto),
                     OrderBySelectedType = (dto) => FilterOrdenator.OrderByMaxStops(dto)
                 },
                 new()
                 {
-                    Type = FilterType.DepartureTimeOriginMinutes,
+                    Type = FilterType.DepartureTimeOriginMinutesMin,
                     Priority = 4,
-                    Condition = f => IsMinMaxRelevant(f.departureTimeOriginMinutes),
-                    ApplyFilter = (f, dto) => FilterOperator.FilterByDepHourOrigin(f.departureTimeOriginMinutes, dto),
-                    FixFilterRange = (f, dto) => FilterOperator.FixFilterRangeDepTimeOrigin(f, dto),
+                    Condition = f => f.departureTimeOriginMinutes.min > 0,
+                    ApplyFilter = (f, dto) => FilterOperator.FilterByDepHourOriginMin(f.departureTimeOriginMinutes, dto),
+                    FixFilterRange = (f, dto) => FilterFixer.FixFilterRangeDepTimeOriginMin(f, dto),
                     OrderBySelectedType = (dto) => FilterOrdenator.OrderByDepTimeOrigin(dto)
                 },
                 new()
                 {
-                    Type = FilterType.DepartureTimeReturnMinutes,
+                Type = FilterType.DepartureTimeOriginMinutesMax,
+                    Priority = 5,
+                    Condition = f => f.departureTimeOriginMinutes.max > 0,
+                    ApplyFilter = (f, dto) => FilterOperator.FilterByDepHourOriginMax(f.departureTimeOriginMinutes, dto),
+                    FixFilterRange = (f, dto) => FilterFixer.FixFilterRangeDepTimeOriginMax(f, dto),
+                    OrderBySelectedType = (dto) => FilterOrdenator.OrderByDepTimeOrigin(dto)
+                },
+                new()
+                {
+                    Type = FilterType.DepartureTimeReturnMinutesMin,
                     Priority = 4,
-                    Condition = f => IsMinMaxRelevant(f.departureTimeReturnMinutes),
-                    ApplyFilter = (f, dto) => FilterOperator.FilterByDepHourReturn(f.departureTimeReturnMinutes, dto),
-                    FixFilterRange = (f, dto) => FilterOperator.FixFilterRangeDepTimeReturn(f, dto),
+                    Condition = f => f.departureTimeReturnMinutes.min > 0,
+                    ApplyFilter = (f, dto) => FilterOperator.FilterByDepHourReturnMin(f.departureTimeReturnMinutes, dto),
+                    FixFilterRange = (f, dto) => FilterFixer.FixFilterRangeDepTimeReturnMin(f, dto),
+                    OrderBySelectedType =(dto) => FilterOrdenator.OrderByDepTimeReturn(dto)
+                },
+                new()
+                {
+                    Type = FilterType.DepartureTimeReturnMinutesMax,
+                    Priority = 5,
+                    Condition = f => f.departureTimeReturnMinutes.max > 0,
+                    ApplyFilter = (f, dto) => FilterOperator.FilterByDepHourReturnMax(f.departureTimeReturnMinutes, dto),
+                    FixFilterRange = (f, dto) => FilterFixer.FixFilterRangeDepTimeReturnMax(f, dto),
                     OrderBySelectedType =(dto) => FilterOrdenator.OrderByDepTimeReturn(dto)
                 }
             ];

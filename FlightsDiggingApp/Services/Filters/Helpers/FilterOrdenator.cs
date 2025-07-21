@@ -1,6 +1,6 @@
 ﻿using FlightsDiggingApp.Models;
 
-namespace FlightsDiggingApp.Services.Filters
+namespace FlightsDiggingApp.Services.Filters.Helpers
 {
     public class FilterOrdenator
     {

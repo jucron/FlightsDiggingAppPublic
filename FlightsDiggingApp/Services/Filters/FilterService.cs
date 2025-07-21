@@ -2,6 +2,7 @@ using System.Net;
 using FlightsDiggingApp.Mappers;
 using FlightsDiggingApp.Models;
 using FlightsDiggingApp.Properties;
+using FlightsDiggingApp.Services.Filters.Helpers;
 using Microsoft.Extensions.Options;
 using static FlightsDiggingApp.Models.Filter;
 
@@ -37,6 +38,8 @@ namespace FlightsDiggingApp.Services.Filters
 
                 if (hasAnyData(filteredResponseDTO))
                 {
+                    // Fix the range, because the filter might start out of range
+                    selectedRule?.FixFilterRange(filter, filteredResponseDTO);
                     // ApplyFilter selected field first if any
                     selectedRule?.ApplyFilter(filter, filteredResponseDTO);
 
@@ -110,10 +113,8 @@ namespace FlightsDiggingApp.Services.Filters
                 totalFlights = data.Count,
                 flightsDurationMinutes = new MinMax<int>()
                 {
-                    min = data.Where(rt => rt.departureFlight.segments?.Count > 0)
-                                    .Min(rt => rt.durationStatsMinutes.min),
-                    max = data.Where(rt => rt.departureFlight.segments?.Count > 0)
-                                    .Max(rt => rt.durationStatsMinutes.max)
+                    min = GetMinDurationFromLongestFlights(data),
+                    max = GetMaxDurationFromLongestFlights(data)
                 },
                 maxPrice = data.Max(roundTrip => roundTrip.price.total),
                 minPrice = data.Min(roundTrip => roundTrip.price.total),
@@ -121,6 +122,23 @@ namespace FlightsDiggingApp.Services.Filters
                 departureTimeOriginMinutes = CalculateOriginTimeMinutes(data),
                 departureTimeReturnMinutes = CalculateReturnTimeMinutes(data)
             };
+        }
+
+        private static int GetMinDurationFromLongestFlights(List<RoundTripDTO> data)
+        {
+            var minOrigin = data.Where(rt => rt.departureFlight.segments?.Count > 0)
+                                    .Min(rt => rt.durationStatsMinutes.max);
+            var minReturn = data.Where(rt => rt.returnFlight.segments?.Count > 0)
+                                    .Min(rt => rt.durationStatsMinutes.max);
+            return Math.Min(minOrigin, minReturn);
+        }
+        private static int GetMaxDurationFromLongestFlights(List<RoundTripDTO> data)
+        {
+            var minOrigin = data.Where(rt => rt.departureFlight.segments?.Count > 0)
+                                    .Max(rt => rt.durationStatsMinutes.max);
+            var minReturn = data.Where(rt => rt.returnFlight.segments?.Count > 0)
+                                    .Max(rt => rt.durationStatsMinutes.max);
+            return Math.Max(minOrigin, minReturn);
         }
 
         private static MinMax<int> CalculateReturnTimeMinutes(List<RoundTripDTO> data)

@@ -3,7 +3,6 @@
     public class Filter
     {
         public double maxPrice { get; set; }
-        public double minPrice { get; set; } = 0;
         public int maxDurationMinutes { get; set; }
         public int maxStops { get; set; }
         public int maxRoundTrips { get; set; }
@@ -16,11 +15,12 @@
     {
         None,
         MaxPrice,
-        MinPrice,
         Duration,
         Stops,
         RoundTripsMax,
-        DepartureTimeOriginMinutes,
-        DepartureTimeReturnMinutes
+        DepartureTimeOriginMinutesMin,
+        DepartureTimeOriginMinutesMax,
+        DepartureTimeReturnMinutesMin,
+        DepartureTimeReturnMinutesMax
     }
 }
