@@ -7,11 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="amadeus_api_properties_values.json" />
+    <Content Remove="api_properties_values.json" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="amadeus_api_properties_values.json" />
+    <None Include="api_properties_values.json" />
   </ItemGroup>
 
   <ItemGroup>

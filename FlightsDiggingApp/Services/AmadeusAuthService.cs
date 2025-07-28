@@ -16,11 +16,11 @@ namespace FlightsDiggingApp.Services
         private readonly ILogger<AmadeusAuthService> _logger;
         private readonly AmadeusApiProperties _amadeusApiProperties;
 
-        public AmadeusAuthService(ICacheService cacheService, ILogger<AmadeusAuthService> logger, IOptions<AmadeusApiProperties> amadeusApiProperties)
+        public AmadeusAuthService(ICacheService cacheService, ILogger<AmadeusAuthService> logger, IPropertiesProvider propertiesProvider)
         {
             _cacheService = cacheService;
             _logger = logger;
-            _amadeusApiProperties = amadeusApiProperties.Value;
+            _amadeusApiProperties = propertiesProvider.AmadeusApiProperties;
         }
 
         public void ClearToken()

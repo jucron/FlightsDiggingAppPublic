@@ -1,12 +1,15 @@
-﻿using System.Net.WebSockets;
+﻿using System.Net;
+using System.Net.WebSockets;
 using System.Text;
-using FlightsDiggingApp.Models;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using FlightsDiggingApp.Mappers;
-using Microsoft.Extensions.Logging;
+using FlightsDiggingApp.Models;
 using FlightsDiggingApp.Models.RapidApi;
-using System.Net;
+using FlightsDiggingApp.Properties;
 using FlightsDiggingApp.Services.Filters;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace FlightsDiggingApp.Services
 {
@@ -17,13 +20,18 @@ namespace FlightsDiggingApp.Services
         private readonly IFilterService _filterService;
         private readonly ICacheService _cacheService;
         private readonly IAuthService _authService;
-        public FlightsDiggerService(ILogger<FlightsDiggerService> logger, IApiService apiService, IFilterService filterService, ICacheService cacheService, IAuthService authService)
+        private readonly IPropertiesProvider _propertiesProvider;
+
+        public FlightsDiggerService(ILogger<FlightsDiggerService> logger, 
+            IApiService apiService, IFilterService filterService, ICacheService cacheService, 
+            IAuthService authService, IPropertiesProvider propertiesProvider)
         {
             _logger = logger;
             _apiService = apiService;
             _filterService = filterService;
             _cacheService = cacheService;
             _authService = authService;
+            _propertiesProvider = propertiesProvider;
         }
 
         public string GetAuthToken()
@@ -43,21 +51,26 @@ namespace FlightsDiggingApp.Services
 
         public RoundtripResponseDTO GetRoundTrip(RoundtripRequest request)
         {
-            /*
-            var response = _apiService.GetRoundtripAsync(request).Result;
-            if (response == null)
+            bool isTest = _propertiesProvider.AmadeusApiProperties.isTest;
+
+            RoundtripResponseDTO responseDTO;
+
+            if (!isTest) { 
+                var response = _apiService.GetRoundtripAsync(request).Result;
+                if (response == null)
+                {
+                    return new RoundtripResponseDTO() { status = OperationStatus.CreateStatusFailure(HttpStatusCode.NoContent, "Response from external API is null") };
+                }
+                // Map response to DTO
+                responseDTO = RoundtripMapper.MapGetRoundtripResponseToDTO(response, request, _propertiesProvider.AffiliateProperties);
+            } else
             {
-                return new RoundtripResponseDTO() { status = OperationStatus.CreateStatusFailure(HttpStatusCode.NoContent, "Response from external API is null") };
+                // Only for testing!
+                string json = File.ReadAllText("Properties\\ExampleResponseDTO.json");
+                JsonSerializerOptions jsonOptions = new() { Converters = { new JsonStringEnumConverter() } };
+                responseDTO = JsonSerializer.Deserialize<RoundtripResponseDTO>(json, jsonOptions);
             }
 
-            // Map response to DTO
-            var responseDTO = RoundtripMapper.MapGetRoundtripResponseToDTO(response, request);
-            */
-
-            // Only for testing!
-            string json = File.ReadAllText("Properties\\ExampleResponseDTO.json");
-            var responseDTO = JsonSerializer.Deserialize<RoundtripResponseDTO>(json);
-            
             // If response have error, no need to store in cache or apply filter
             if (responseDTO == null || responseDTO.status.hasError) { return responseDTO; }
 

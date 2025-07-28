@@ -1,16 +1,14 @@
 using FlightsDiggingApp.Properties;
-using FlightsDiggingApp.Services;
-using Microsoft.Extensions.Logging.Console;
-using Microsoft.Extensions.Logging;
 using FlightsDiggingApp;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
 BuilderHelper.AddControllers(builder);
 
+#if DEBUG
 BuilderHelper.AddSwagger(builder);
-
-BuilderHelper.SetupCors(builder);
+#endif
 
 BuilderHelper.AddPropertiesDependencies(builder);
 
@@ -18,9 +16,16 @@ BuilderHelper.AddSingletonsDependencies(builder);
 
 BuilderHelper.ConfigureLogger(builder);
 
+// TEMP service provider to resolve EnvironmentProperties early
+var tempProvider = builder.Services.BuildServiceProvider();
+var envProps = tempProvider.GetRequiredService<IPropertiesProvider>().EnvironmentProperties;
+
+BuilderHelper.SetupCors(builder, envProps);
+
 // Build App
 var app = builder.Build();
 
+#if DEBUG
 // Dev tools
 app.UseDeveloperExceptionPage();
 
@@ -30,11 +35,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+#endif
 
 app.UseRouting();              // Enable routing for controllers
 
-//app.UseCors("AllowAngular"); // ApplyFilter CORS policy
-app.UseCors("AllowAll");       // ApplyFilter CORS policy
+#if DEBUG
+app.UseCors(BuilderHelper.CORS_POLICY_ALLOW_ALL);
+#elif RELEASE
+app.UseCors(BuilderHelper.CORS_POLICY_ALLOW_FRONT);       
+#endif
 
 app.UseWebSockets();           // Enable WebSocket support before routing
 

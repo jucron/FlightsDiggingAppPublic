@@ -16,11 +16,11 @@ namespace FlightsDiggingApp.Services
         private readonly IAuthService _authService;
         private readonly AmadeusApiProperties _amadeusApiProperties;
 
-        public AmadeusApiService(ILogger<AmadeusApiService> logger, IAuthService authService, IOptions<AmadeusApiProperties> amadeusApiProperties)
+        public AmadeusApiService(ILogger<AmadeusApiService> logger, IAuthService authService, IPropertiesProvider propertiesProvider)
         {
             _logger = logger;
             _authService = authService;
-            _amadeusApiProperties = amadeusApiProperties.Value;
+            _amadeusApiProperties = propertiesProvider.AmadeusApiProperties;
         }
 
         public async Task<IApiServiceResponse> GetAirportsAsync(string query, int tries = 3)

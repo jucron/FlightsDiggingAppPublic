@@ -10,6 +10,8 @@ namespace FlightsDiggingApp
 {
     public class BuilderHelper
     {
+        public static string CORS_POLICY_ALLOW_ALL = "AllowAll";
+        public static string CORS_POLICY_ALLOW_FRONT = "AllowFront";
         internal static void AddControllers(WebApplicationBuilder builder)
         {
             // Add controllers to the container.
@@ -22,13 +24,21 @@ namespace FlightsDiggingApp
         internal static void AddPropertiesDependencies(WebApplicationBuilder builder)
         {
             // Populating Properties
-            builder.Configuration.AddJsonFile("amadeus_api_properties_values.json", optional: false, reloadOnChange: true);
-            builder.Services.Configure<AmadeusApiProperties>(builder.Configuration.GetSection("AmadeusApiValues"));
+            builder.Configuration
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("api_properties_values.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables();
+
+            builder.Services
+                .Configure<AmadeusApiProperties>(builder.Configuration.GetSection("AmadeusApiValues"))
+                .Configure<AffiliateProperties>(builder.Configuration.GetSection("AffiliateProperties"))
+                .Configure<EnvironmentProperties>(builder.Configuration.GetSection("EnvironmentProperties"));
         }
 
         internal static void AddSingletonsDependencies(WebApplicationBuilder builder)
         {
             // Registering Dependency Injection
+            builder.Services.AddSingleton<IPropertiesProvider, PropertiesProvider>();
             builder.Services.AddMemoryCache();
             builder.Services.AddSingleton<ICacheService, CacheService>();
             builder.Services.AddSingleton<IAuthService, AmadeusAuthService>();
@@ -60,20 +70,20 @@ namespace FlightsDiggingApp
             });
         }
 
-        internal static void SetupCors(WebApplicationBuilder builder)
+        internal static void SetupCors(WebApplicationBuilder builder, EnvironmentProperties envProp)
         {
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowAll", policy =>
+                options.AddPolicy(CORS_POLICY_ALLOW_ALL, policy =>
                 {
                     // Allow any origin (less secure, use only in development):
                     policy.AllowAnyOrigin()
                           .AllowAnyHeader()
                           .AllowAnyMethod();
                 });
-                options.AddPolicy("AllowAngular", policy =>
+                options.AddPolicy(CORS_POLICY_ALLOW_FRONT, policy =>
                 {
-                    policy.WithOrigins("http://localhost:4200") // Replace with your Angular app URL
+                    policy.WithOrigins(envProp.front_url)
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials();

@@ -14,10 +14,10 @@ namespace FlightsDiggingApp.Services.Filters
 
         private readonly int _maxRoundTrips;
         private readonly List<FilterRule> _rules;
-        public FilterService(ILogger<FilterService> logger, IOptions<AmadeusApiProperties> amadeusApiProperties)
+        public FilterService(ILogger<FilterService> logger, IPropertiesProvider propertiesProvider)
         {
             _logger = logger;
-            _maxRoundTrips = amadeusApiProperties.Value.limit_roundtrip_flights;
+            _maxRoundTrips = propertiesProvider.AmadeusApiProperties.limit_roundtrip_flights;
             _rules = FilterRule.BuildRules();
         }
 

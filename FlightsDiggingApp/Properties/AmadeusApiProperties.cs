@@ -9,6 +9,7 @@ namespace FlightsDiggingApp.Properties
         public string client_secret { get; set; }
         public string base_url_getairports { get; set; }
         public string base_url_roundtrips { get; set; }
+        public bool isTest { get; set; }
 
     }
 }

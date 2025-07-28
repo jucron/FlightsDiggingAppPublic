@@ -1,20 +1,21 @@
-﻿using FlightsDiggingApp.Models.Amadeus;
-using FlightsDiggingApp.Models.RapidApi;
-using FlightsDiggingApp.Models;
+﻿using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Globalization;
+using System.Web;
+using FlightsDiggingApp.Models;
+using FlightsDiggingApp.Models.Amadeus;
+using FlightsDiggingApp.Models.RapidApi;
 
 namespace FlightsDiggingApp.Mappers
 {
     public class RoundtripMapper
     {
-        public static RoundtripResponseDTO MapGetRoundtripResponseToDTO(IApiServiceResponse response, RoundtripRequest roundtripRequest)
+        public static RoundtripResponseDTO MapGetRoundtripResponseToDTO(IApiServiceResponse response, RoundtripRequest roundtripRequest, Properties.AffiliateProperties affiliateProperties)
         {
             return response switch
             {
-                AmadeusSearchFlightsResponse amadeusSearchFlightsResponse => MapAmadeusSearchFlightsResponseResponseToRoundtripDTO(amadeusSearchFlightsResponse, roundtripRequest),
+                AmadeusSearchFlightsResponse amadeusSearchFlightsResponse => MapAmadeusSearchFlightsResponseResponseToRoundtripDTO(amadeusSearchFlightsResponse, roundtripRequest, affiliateProperties),
 
                 RapidApiRoundtripsResponse rapidApiAirportsResponse => new RoundtripResponseDTO(),
 
@@ -33,7 +34,7 @@ namespace FlightsDiggingApp.Mappers
             };
         }
 
-        private static RoundtripResponseDTO MapAmadeusSearchFlightsResponseResponseToRoundtripDTO(AmadeusSearchFlightsResponse amadeusSearchFlightsResponse, RoundtripRequest roundtripRequest)
+        private static RoundtripResponseDTO MapAmadeusSearchFlightsResponseResponseToRoundtripDTO(AmadeusSearchFlightsResponse amadeusSearchFlightsResponse, RoundtripRequest roundtripRequest, Properties.AffiliateProperties affiliateProperties)
         {
             if (amadeusSearchFlightsResponse == null || amadeusSearchFlightsResponse.data == null)
             {
@@ -46,7 +47,7 @@ namespace FlightsDiggingApp.Mappers
                 dictionaries = amadeusSearchFlightsResponse.dictionaries,
                 data = []
             };
-            var link = GenerateScannerLinkByRequest(roundtripRequest);
+            var link = GenerateLinkByRequest(roundtripRequest, affiliateProperties);
             foreach (var roundtrip in amadeusSearchFlightsResponse.data)
             {
                 // If we have two itineraries (departure & return)
@@ -135,18 +136,41 @@ namespace FlightsDiggingApp.Mappers
             };
         }
 
-        private static string GenerateScannerLinkByRequest(RoundtripRequest request)
+        private static string GenerateLinkByRequest(RoundtripRequest request, Properties.AffiliateProperties affiliateProperties)
         {
-            string baseUrl = "https://www.skyscanner.com/transport/flights";
+            string baseUrl = affiliateProperties.base_url;
+            int adults = request.adults;
+            int children = request.children;
+            int infants = request.infants;
+            string travelClassCode = request.travelClass.ToUpper() switch
+            {
+                "ECONOMY" => "",
+                "PREMIUM ECONOMY" => "w",
+                "BUSINESS" => "c",
+                "FIRST" => "f",
+                _ => ""
+            };
+            string GetDateFormat(string dateStr, string format = "ddMM")
+            {
+                if (DateTime.TryParse(dateStr, out DateTime parsedDate))
+                {
+                    return parsedDate.ToString(format);
+                }
+                return "";
+            }
 
-            string formattedDateTo = request.to.Replace("-", "");
-            string formattedDateFrom = request.from.Replace("-", "");
+            string searchParams = $"{request.from}{GetDateFormat(request.departDate)}{request.to}{GetDateFormat(request.returnDate)}{travelClassCode}{adults}{children}{infants}]";
 
-            string url = $"{baseUrl}/{formattedDateFrom}/{formattedDateTo}/{request.departDate}/{request.returnDate}/" +
-                         $"?adultsv2={request.adults}&childrenv2={request.children}&infants={request.infants}&cabinclass={request.travelClass}&currency={request.currency}";
+            string marker = affiliateProperties.marker;
+            string campaignId = affiliateProperties.campaignId;
+            string trs = affiliateProperties.trs;
+            string p = affiliateProperties.p;
+        
+            string encodedUrl = HttpUtility.UrlEncode(baseUrl+searchParams);
 
-            return url;
+            return $"https://tp.media/r?marker={marker}&trs={trs}&p={p}&u={encodedUrl}&campaign_id={campaignId}";
+
         }
-
     }
+
 }
